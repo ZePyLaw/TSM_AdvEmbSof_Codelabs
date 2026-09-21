@@ -1,0 +1,22 @@
+@'
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# west metadata and downloaded dependencies
+.west/
+deps/
+
+# Zephyr build outputs
+build/
+build_*/
+build_clang/
+
+# Machine-specific debugger paths
+.vscode/launch.json
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+'@ | Set-Content .gitignore

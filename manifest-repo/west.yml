@@ -1,0 +1,18 @@
+manifest:
+  version: 0.13
+
+  projects:
+    - name: zephyr
+      revision: v4.4.0
+      url: https://github.com/zephyrproject-rtos/zephyr
+      import:
+        path-prefix: deps
+        file: west.yml
+        name-allowlist:
+          - cmsis_6
+          - hal_nordic
+    
+    - name: zpp_lib
+      url: https://github.com/AdvEmbSof/zpp_lib.git
+      revision: v1.1
+      path: deps/zpp_lib
