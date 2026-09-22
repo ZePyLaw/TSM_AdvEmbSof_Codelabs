@@ -1,4 +1,3 @@
-```yaml
 exclude: ^(welcome/|path_finder/|semaphores/|car_system/)
 
 repos:
@@ -136,4 +135,3 @@ repos:
   #   pass_filenames: true
   #   require_serial: true
   #   files: ^(multi_tasking)/.*\.(c|cc|cpp|cxx)$
-```
