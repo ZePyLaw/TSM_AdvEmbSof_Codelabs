@@ -28,15 +28,17 @@ ZPP_LOG_MODULE_REGISTER(blinky, CONFIG_APP_LOG_LEVEL);
 void blink() {
   zpp_lib::DigitalOut led(zpp_lib::DigitalOut::PinName::LED0);
   using std::literals::chrono_literals::operator""ms;
-  static constexpr std::chrono::milliseconds blinkInterval = 1000ms;
+  static constexpr std::chrono::milliseconds kBlinkInterval = 1000ms;
 
   while (true) {
     led = !led;
-    zpp_lib::ThisThread::sleep_for(blinkInterval);
+    zpp_lib::ThisThread::sleep_for(kBlinkInterval);
   }
 }
 
-int main(void) {
+// The complexity is increased by Zephyr logging macros.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+int main() {
   ZPP_LOG_DBG("Running on board %s", CONFIG_BOARD_TARGET);
   ZPP_LOG_DBG("Starting thread");
 
