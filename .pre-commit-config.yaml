@@ -46,14 +46,13 @@ repos:
   #   require_serial: true
   #   files: ^(bme280)/.*\.(c|cc|cpp|cxx)$
 
-  # We will uncomment this later in Lab 2, after creating the sanitize application.
-  # - id: clang-tidy-sanitize
-  #   name: clang-tidy-sanitize
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app sanitize --configs "log+debug+san" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(sanitize)/.*\.(c|cc|cpp|cxx)$
+  - id: clang-tidy-sanitize
+    name: clang-tidy-sanitize
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app sanitize --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+san" --wd "." --header-root sanitize
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(sanitize)/.*\.(c|cc|cpp|cxx)$
 
   # Uncomment when the corresponding simple_tests application is developed.
   # - id: clang-tidy-always-succeed
