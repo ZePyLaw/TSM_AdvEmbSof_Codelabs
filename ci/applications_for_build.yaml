@@ -3,7 +3,6 @@ applications:
     boards:
       - board: nrf5340dk/nrf5340/cpuapp
       - board: qemu_x86
-      - board: native_sim
     configs:
       - gpio
       - log+debug+gpio

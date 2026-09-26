@@ -14,5 +14,5 @@ manifest:
     
     - name: zpp_lib
       url: https://github.com/AdvEmbSof/zpp_lib.git
-      revision: v1.1
+      revision: v1.2
       path: deps/zpp_lib

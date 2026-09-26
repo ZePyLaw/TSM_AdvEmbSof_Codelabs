@@ -31,7 +31,7 @@ repos:
   hooks:
   - id: clang-tidy-blinky
     name: clang-tidy-blinky
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app blinky --configs "log+debug+gpio" --wd "."
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app blinky --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio" --wd "." --header-root blinky
     language: system
     pass_filenames: true
     require_serial: true
