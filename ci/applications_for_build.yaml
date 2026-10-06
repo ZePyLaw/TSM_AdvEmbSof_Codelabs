@@ -7,3 +7,12 @@ applications:
       - gpio
       - log+debug+gpio
     config_dir: ../deps/zpp_lib/configs
+
+  - app: bme280
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+      - board: qemu_x86
+    configs:
+      - sensor
+      - log+debug+sensor
+    config_dir: ../deps/zpp_lib/configs

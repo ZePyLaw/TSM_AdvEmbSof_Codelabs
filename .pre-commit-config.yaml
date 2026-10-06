@@ -37,14 +37,14 @@ repos:
     require_serial: true
     files: ^(blinky)/.*\.(c|cc|cpp|cxx)$
 
-  # Uncomment when the bme280 application is developed.
-  # - id: clang-tidy-bme280
-  #   name: clang-tidy-bme280
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bme280 --configs "log+debug+sensor" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(bme280)/.*\.(c|cc|cpp|cxx)$
+  
+  - id: clang-tidy-bme280
+    name: clang-tidy-bme280
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bme280 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+sensor" --wd "." --header-root bme280
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bme280)/.*\.(c|cc|cpp|cxx)$
 
   - id: clang-tidy-sanitize
     name: clang-tidy-sanitize

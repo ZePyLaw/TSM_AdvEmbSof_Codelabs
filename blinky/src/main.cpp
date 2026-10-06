@@ -16,8 +16,8 @@
 
 // stl
 #include <chrono>
-
-// zpp_lib
+// #include <zephyr/sys/printk.h>
+//  zpp_lib
 #include "zpp_include/digital_out.hpp"
 #include "zpp_include/this_thread.hpp"
 #include "zpp_include/thread.hpp"
@@ -41,6 +41,7 @@ void blink() {
 int main() {
   ZPP_LOG_DBG("Running on board %s", CONFIG_BOARD_TARGET);
   ZPP_LOG_DBG("Starting thread");
+  // printk("Hello world printk!\n");
 
   zpp_lib::Thread thread(zpp_lib::PreemptableThreadPriority::PriorityNormal, "BlinkyThread");
 
