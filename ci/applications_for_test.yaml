@@ -1,0 +1,5 @@
+tests:
+  - root: simple_tests
+    tags: ["cpp"]
+    boards:
+      - board: qemu_x86

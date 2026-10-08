@@ -13,6 +13,13 @@ build/
 build_*/
 build_clang/
 
+# Twister test outputs
+twister-out/
+twister-out.*/
+
+# Local hardware configuration
+my_map.yaml
+
 # Machine-specific debugger paths
 .vscode/launch.json
 

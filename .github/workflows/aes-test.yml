@@ -1,0 +1,25 @@
+name: Test AES workspace
+
+on:
+  # push:               # Run the workflow on every push to any branch
+  # pull_request:       # Run the workflow on every pull request
+  workflow_dispatch:    # Allow manual triggering from the GitHub Actions UI
+
+jobs:
+  build-apps:
+    uses: AdvEmbSof/common-workflows/.github/workflows/build-zephyr-apps.yml@main
+    secrets:
+      personal_access_token: ${{ secrets.ADVEMBSOF_2026_2027 }}
+    with:
+      configuration_file: 'ci/applications_for_build.yaml'
+
+  test-apps:
+    uses: AdvEmbSof/common-workflows/.github/workflows/twister-tests.yml@main
+    secrets:
+      personal_access_token: ${{ secrets.ADVEMBSOF_2026_2027 }}
+    with:
+      configuration_file: 'ci/applications_for_test.yaml'
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
