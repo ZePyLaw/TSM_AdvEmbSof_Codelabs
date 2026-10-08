@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - lab2-software-quality
   pull_request:
     branches:
       - main

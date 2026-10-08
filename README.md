@@ -1,3 +1,85 @@
+# TSM_AdvEmbSof — Advanced Embedded Software
+
+## Project information
+
+- **Institution:** HES-SO Master
+- **Program:** MSE — Master of Science in Engineering
+- **Course:** TSM_AdvEmbSof — Advanced Embedded Software
+- **Academic year:** 2026–2027
+- **Group:** Group 1 — Baremetalists
+- **Students:**
+  - Robin Schaerrer
+  - Alexandre Schmid
+  - Jean Vallet
+
+## Project description
+
+This repository contains the work for the Advanced Embedded Software course project based on Zephyr RTOS.
+
+The project uses a T3-style Zephyr workspace with the applications stored at workspace level and the west manifest located in `manifest-repo/`. Shared build configurations, board overlays, helper scripts and utilities are provided through `zpp_lib`.
+
+Phase A brings together the work completed in the first four codelabs:
+
+- Zephyr workspace setup and configurable builds
+- software quality tooling with `clang-format`, `clang-tidy` and `pre-commit`
+- runtime sanitizers and defensive programming
+- Kconfig and DeviceTree usage
+- automated tests with `ztest` and Twister
+- GitHub Actions workflows for quality checks, application builds and tests
+
+The workspace currently uses **Zephyr 4.4.0** and **zpp_lib v1.3**.
+
+## Phase A
+
+Phase A contains three delivered applications and the test applications developed during the codelabs.
+
+### Applications and supported configurations
+
+| Application | Target boards | Supported configurations |
+|---|---|---|
+| `blinky` | `nrf5340dk/nrf5340/cpuapp`, `qemu_x86` | `gpio`, `log+debug+gpio` |
+| `sanitize` | `nrf5340dk/nrf5340/cpuapp`, `qemu_x86` | `shell`, `shell+debug`, `shell+san` |
+| `bme280` | `nrf5340dk/nrf5340/cpuapp`, `qemu_x86` | `sensor`, `log+debug+sensor` |
+
+The build matrix is defined in:
+
+`ci/applications_for_build.yaml`
+
+Applications use the shared configuration fragments and board overlays from `zpp_lib`.
+
+### Software quality
+
+The repository includes:
+
+- `.clang-format`
+- `.clang-tidy`
+- `.pre-commit-config.yaml`
+- the dedicated pre-commit GitHub Actions workflow
+
+The application-specific clang-tidy hooks include:
+
+- `clang-tidy-blinky`
+- `clang-tidy-sanitize`
+- `clang-tidy-bme280`
+- `clang-tidy-always-succeed`
+- `clang-tidy-ptr-test`
+
+### Testing
+
+The `simple_tests` directory contains the test applications developed with Zephyr's `ztest` framework.
+
+The test configuration is defined in:
+
+`ci/applications_for_test.yaml`
+
+The GitHub Actions workflow:
+
+`.github/workflows/aes-test.yml`
+
+contains jobs for building the applications and running the Twister tests. The workflow is configured for manual execution with `workflow_dispatch`.
+
+---
+
 ## Question 1 - Behaviour of the lookup implementations
 
 The goal of this part was to see what happens when the value used to access a lookup table becomes invalid at runtime.
@@ -166,7 +248,7 @@ The value comes from the shell, so `clang-tidy` cannot know which value will be 
 
 I tested the application with:
 
-`just run-clang-tidy sanitize debug+log+san`
+`just run-clang-tidy sanitize shell+log+debug+san`
 
 and `clang-tidy` completed successfully.
 
