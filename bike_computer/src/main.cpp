@@ -37,11 +37,11 @@ ZPP_LOG_MODULE_REGISTER(template_application, CONFIG_APP_LOG_LEVEL);
 int main() {
   ZPP_LOG_DBG("Running on board %s", CONFIG_BOARD_TARGET);
 
-  using std::literals::chrono_literals::operator""s;
-  static constexpr auto kSleepDuration = 1s;
-  while (true) {
-    ZPP_LOG_DBG("TemplateApplication is running...");
-    zpp_lib::ThisThread::sleep_for(kSleepDuration);
-  }
+  #if CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING
+    bike_computer::static_scheduling::BikeSystem bike_system;
+  #endif
+
+    bikeSystem.start();
+  
   return 0;
 }

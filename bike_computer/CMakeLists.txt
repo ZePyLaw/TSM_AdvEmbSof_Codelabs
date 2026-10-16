@@ -12,4 +12,6 @@ target_sources(
     app
     PRIVATE
     src/main.cpp
+    src/common/task_manager.cpp
+    src/static_scheduling/bike_system.cpp
 )
