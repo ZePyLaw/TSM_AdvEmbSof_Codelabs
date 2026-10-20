@@ -68,7 +68,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
     auto start_time = zpp_lib::Time::get_uptime();
 #endif  // CONFIG_APP_LOG_LEVEL_DEBUG
 
-    // TODO(Student): implement calls to different tasks based on computed schedule
     // Major cycle: 1600 ms
     speed_distance_task();
     gear_task();
@@ -84,7 +83,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
     speed_distance_task();
     reset_task();
     display_task2();
-
 
     // register the time at the end of the cyclic schedule period and print the
     // elapsed time for the period
@@ -169,7 +167,7 @@ void BikeSystem::reset_task() {
 
   if (_reset_device.check_reset()) {
 #if CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
-    std::chrono::microseconds response_time = // TODO(Student): compute response time
+    std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _reset_device.get_press_time();
     ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 #endif  // CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
     _speedometer.reset();
@@ -181,7 +179,9 @@ void BikeSystem::reset_task() {
 void BikeSystem::display_task1() {
   _task_manager.register_task_start(TaskManager::TaskType::DisplayTask1Type);
 
-  // TODO(Student): update gear, speed and distance displayed on screen
+  _bike_display.display_gear(_current_gear);
+  _bike_display.display_speed(_current_speed);
+  _bike_display.display_distance(_traveled_distance);
 
   _task_manager.simulate_computation_time(TaskManager::TaskType::DisplayTask1Type, kAllowSleep);
 }
@@ -189,7 +189,7 @@ void BikeSystem::display_task1() {
 void BikeSystem::display_task2() {
   _task_manager.register_task_start(TaskManager::TaskType::DisplayTask2Type);
 
-  // TODO(Student): update temperature on screen
+  _bike_display.display_temperature(_current_temperature);
 
   _task_manager.simulate_computation_time(TaskManager::TaskType::DisplayTask2Type, kAllowSleep);
 }

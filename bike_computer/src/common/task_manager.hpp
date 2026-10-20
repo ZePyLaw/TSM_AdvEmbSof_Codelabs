@@ -97,4 +97,3 @@ private:
 };
 
 }  // namespace bike_computer
-

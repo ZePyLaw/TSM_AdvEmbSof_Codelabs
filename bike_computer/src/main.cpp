@@ -37,11 +37,11 @@ ZPP_LOG_MODULE_REGISTER(template_application, CONFIG_APP_LOG_LEVEL);
 int main() {
   ZPP_LOG_DBG("Running on board %s", CONFIG_BOARD_TARGET);
 
-  #if CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING
-    bike_computer::static_scheduling::BikeSystem bike_system;
-  #endif
+#if CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING
+  bike_computer::static_scheduling::BikeSystem bike_system;
+#endif
 
-    bikeSystem.start();
-  
+  bike_system.start();
+
   return 0;
 }

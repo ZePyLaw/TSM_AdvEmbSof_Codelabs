@@ -169,4 +169,3 @@ bool TaskManager::is_within_expected_time(TaskType task_type) {
 #endif  // CONFIG_TEST
 
 }  // namespace bike_computer
-
