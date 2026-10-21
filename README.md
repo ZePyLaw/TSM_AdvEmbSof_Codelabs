@@ -277,3 +277,74 @@ This shows the difference between static analysis and runtime sanitizers quite w
 `clang-tidy` checks the source code without running the program, so it cannot always know what values will be used at runtime.
 
 UBSan checks the program while it is running, so it can detect errors such as the signed integer overflow when they actually happen.
+
+---
+
+## Phase B — Bike Computer
+
+### Question 1 — Static cyclic scheduling
+
+The bike computer uses a super-loop with static cyclic scheduling. The tasks are executed periodically in a fixed order.
+
+| Task | Computation time | Period |
+|---|---:|---:|
+| Speed and distance | 200 ms | 400 ms |
+| Gear | 100 ms | 800 ms |
+| Temperature | 100 ms | 1600 ms |
+| Reset | 100 ms | 800 ms |
+| Display | 300 ms | 1600 ms |
+
+### Major cycle
+
+The major cycle is the time after which the complete task schedule repeats.
+
+The task periods are 400 ms, 800 ms and 1600 ms. The major cycle is their least common multiple.
+
+Therefore, its value is **1600 ms**.
+
+Within one major cycle, each task is executed as follows:
+
+| Task | Period | Executions in 1600 ms |
+|---|---:|---:|
+| Speed and distance | 400 ms | 4 |
+| Gear | 800 ms | 2 |
+| Temperature | 1600 ms | 1 |
+| Reset | 800 ms | 2 |
+| Display | 1600 ms | 1 |
+
+
+### Minor cycle
+
+The minor cycle is the duration of one frame in the cyclic schedule.
+
+A suitable minor cycle is **400 ms**, which is the greatest common divisor of the task periods.
+
+Note: This value also depends on the computation time of each task. In our scheduling, the Display task requires 300 ms in total, but can be split into two subtasks so that the display updates can be placed in different frames without exceeding the 400 ms limit.
+
+The 400 ms minor cycle value means that the 1600 ms major cycle is divided into four minor cycles:
+
+| Frame | Time interval |
+|---|---|
+| 1 | 0–400 ms |
+| 2 | 400–800 ms |
+| 3 | 800–1200 ms |
+| 4 | 1200–1600 ms |
+
+
+### Processor utilisation
+
+The processor utilisation factor is calculated by adding the computation time divided by the period for each task:
+
+`U = 200/400 + 100/800 + 100/1600 + 100/800 + 300/1600`
+
+`U = 0.5 + 0.125 + 0.0625 + 0.125 + 0.1875`
+
+`U = 1.0 = 100%`
+
+Therefore, the processor utilisation is **100%**. The processor has no idle time during the major cycle.
+
+### Major cycle timeline
+
+The following diagram shows the complete 1600 ms major cycle.
+
+![Timeline of one 1600 ms major cycle](images/bike-static-scheduling-major-cycle.png)
