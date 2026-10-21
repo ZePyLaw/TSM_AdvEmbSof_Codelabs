@@ -78,6 +78,14 @@ repos:
     require_serial: true
     files: ^(bike_computer/tests/sensor_device)/.*\.(c|cc|cpp|cxx)$
 
+  - id: clang-tidy-bike-computer-speedometer
+    name: clang-tidy-bike-computer-speedometer
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/speedometer --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+sensor+test" --header-root "bike_computer" --wd "."
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bike_computer/tests/speedometer)/.*\.(c|cc|cpp|cxx)$
+
   # Uncomment when the bike_computer application is developed.
   # - id: clang-tidy-bike-computer
   #   name: clang-tidy-bike-computer
