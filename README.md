@@ -1,5 +1,8 @@
 # TSM_AdvEmbSof — Advanced Embedded Software
 
+[![pre-commit-clang](https://github.com/AdvEmbSof/TSM_AES_2026-2027_GROUP1/actions/workflows/.pre-commit.yaml/badge.svg)](https://github.com/AdvEmbSof/TSM_AES_2026-2027_GROUP1/actions/workflows/.pre-commit.yaml)
+[![Test AES workspace](https://github.com/AdvEmbSof/TSM_AES_2026-2027_GROUP1/actions/workflows/aes-test.yml/badge.svg?job=build-apps)](https://github.com/AdvEmbSof/TSM_AES_2026-2027_GROUP1/actions/workflows/aes-test.yml)
+
 ## Project information
 
 - **Institution:** HES-SO Master
