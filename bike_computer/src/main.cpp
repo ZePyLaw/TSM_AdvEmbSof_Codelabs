@@ -27,21 +27,31 @@
 // stl
 
 // zpp_lib
-#include "zpp_include/this_thread.hpp"
 #include "zpp_include/zpp_log.hpp"
 
-ZPP_LOG_MODULE_REGISTER(template_application, CONFIG_APP_LOG_LEVEL);
+// Include BikeSystem only when static scheduling is enabled.
+#if defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING)
+#include "static_scheduling/bike_system.hpp"
+#endif
 
-// The complexity is increased by zephyr macros
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+ZPP_LOG_MODULE_REGISTER(bike_computer, CONFIG_APP_LOG_LEVEL);
+
 int main() {
   ZPP_LOG_DBG("Running on board %s", CONFIG_BOARD_TARGET);
 
-#if CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING
+#if defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING)
+  // Start the BikeComputer static cyclic scheduler.
   bike_computer::static_scheduling::BikeSystem bike_system;
-#endif
 
-  bike_system.start();
+  auto result = bike_system.start();
+  if (!result) {
+    ZPP_LOG_ERR("BikeSystem failed: %d", static_cast<int>(result.error()));
+    return -1;
+  }
+#else
+  // Avoid referencing BikeSystem when this feature is disabled.
+  ZPP_LOG_WRN("BikeComputer static scheduling is disabled");
+#endif
 
   return 0;
 }
