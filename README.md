@@ -80,7 +80,7 @@ contains jobs for building the applications and running the Twister tests. The w
 
 ---
 
-## Question 1 - Behaviour of the lookup implementations
+### Question 1 - Behaviour of the lookup implementations
 
 The goal of this part was to see what happens when the value used to access a lookup table becomes invalid at runtime.
 
@@ -236,7 +236,7 @@ From these tests, the main thing I learned is that assertions are useful during 
 
 `LookUpTable` gives the most controlled behaviour because it detects the invalid value, returns an error value and keeps the application running.
 
-## Additional runtime bug detected by UBSan
+### Additional runtime bug detected by UBSan
 
 The exercise also asks for another bug that is not detected by `clang-tidy` but is detected at runtime by a sanitizer.
 
@@ -280,9 +280,9 @@ UBSan checks the program while it is running, so it can detect errors such as th
 
 ---
 
-## Phase B — Bike Computer
+## Phase B — Bike Computer - Part 1
 
-### Question 1 — Static cyclic scheduling
+### Bikecomputer Static cyclic scheduling exercice
 
 The Bike Computer uses a static cyclic schedule implemented as a super-loop.
 
@@ -529,3 +529,14 @@ The following diagram shows the complete 1600 ms major cycle.
 ![Timeline of one 1600 ms major cycle](images/bike-static-scheduling-major-cycle.png)
 
 
+### Question 1 - Response time of the reset event
+
+#### Response time variation:
+The system uses a static cyclic schedule (super-loop) where the `reset_task` has an 800 ms period. Although an interrupt immediately records the timestamp of the press, the system only triggers the reset by physically reading the button's state when `reset_task` executes. If the user holds the button and the task executes immediately, the delay is a few milliseconds. If they press just after a task execution, they must hold the button for up to 800 ms until the next cycle, creating a large variation in response time.
+
+#### Missed events:
+Because the reset condition relies strictly on polling at the exact moment `reset_task` runs, if the user presses and releases the button between two executions, the polling will read a released state and completely miss the event.
+
+#### Why these behaviors are problematic:
+- **Unreliability:** The interface is non-deterministic for the user, who is forced to guess how long to hold the button to ensure their action is registered.
+- **Poor User Experience:** A highly variable latency gives the impression of a slow, unstable, or defective device, which is unacceptable for a real-time embedded system.
