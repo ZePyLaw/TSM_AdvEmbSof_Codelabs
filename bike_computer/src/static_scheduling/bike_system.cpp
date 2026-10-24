@@ -68,9 +68,9 @@ zpp_lib::ZephyrResult BikeSystem::start() {
   _task_manager.initialize_phase();
 
   while (true) {
-#if CONFIG_APP_LOG_LEVEL_DEBUG
+#if CONFIG_APP_LOG_LEVEL_DBG
     auto start_time = zpp_lib::Time::get_uptime();
-#endif  // CONFIG_APP_LOG_LEVEL_DEBUG
+#endif  // CONFIG_APP_LOG_LEVEL_DBG
 
     // Major cycle: 1600 ms
     speed_distance_task();
@@ -90,11 +90,11 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 
     // register the time at the end of the cyclic schedule period and print the
     // elapsed time for the period
-#if CONFIG_APP_LOG_LEVEL_DEBUG
+#if CONFIG_APP_LOG_LEVEL_DBG
     std::chrono::microseconds end_time = zpp_lib::Time::get_uptime();
     auto cycle                         = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     ZPP_LOG_DBG("Repeating cycle time is %" PRIu64 " milliseconds", cycle.count());
-#endif  // CONFIG_APP_LOG_LEVEL_DEBUG
+#endif  // CONFIG_APP_LOG_LEVEL_DBG
 
     if (_stop_flag.load()) {
       break;

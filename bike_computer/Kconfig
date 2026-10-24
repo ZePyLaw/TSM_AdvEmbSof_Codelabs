@@ -6,6 +6,13 @@ module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"
 
+config LOG_TASK_TIMES
+  bool "Log task times for debugging purposes"
+  default n
+  help
+    This option must be enabled to log task times with the TaskManager class
+    This option must be disabled for test and production
+
 config BIKE_COMPUTER_STATIC_SCHEDULING
   bool "Build system with static scheduling"
   default n
