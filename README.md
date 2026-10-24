@@ -284,67 +284,248 @@ UBSan checks the program while it is running, so it can detect errors such as th
 
 ### Question 1 — Static cyclic scheduling
 
-The bike computer uses a super-loop with static cyclic scheduling. The tasks are executed periodically in a fixed order.
+The Bike Computer uses a static cyclic schedule implemented as a super-loop.
 
-| Task | Computation time | Period |
-|---|---:|---:|
-| Speed and distance | 200 ms | 400 ms |
-| Gear | 100 ms | 800 ms |
-| Temperature | 100 ms | 1600 ms |
-| Reset | 100 ms | 800 ms |
-| Display | 300 ms | 1600 ms |
+The schedule is computed before execution and repeated indefinitely. The
+system uses one processor and tasks are non-preemptive: once a task starts, it
+runs until it completes.
 
-### Major cycle
+The scheduling assumptions are:
 
-The major cycle is the time after which the complete task schedule repeats.
+- All tasks are periodic.
+- All computation times are constant.
+- The deadline of each task is equal to its period.
+- The phase of every task is 0 ms.
+- Tasks are independent.
+- The Display task may be split into subtasks.
 
-The task periods are 400 ms, 800 ms and 1600 ms. The major cycle is their least common multiple.
+### Task set
 
-Therefore, its value is **1600 ms**.
+| Task | Period (T) | Computation time (C) | Phase |
+|---|---:|---:|---:|
+| Speed and distance | 400 ms | 200 ms | 0 ms |
+| Gear | 800 ms | 100 ms | 0 ms |
+| Reset | 800 ms | 100 ms | 0 ms |
+| Temperature | 1600 ms | 100 ms | 0 ms |
+| Display task 1 | 1600 ms | 200 ms | 0 ms |
+| Display task 2 | 1600 ms | 100 ms | 0 ms |
 
-Within one major cycle, each task is executed as follows:
+The original Display task has a computation time of 300 ms and a period of
+1600 ms. It is split into two subtasks:
 
-| Task | Period | Executions in 1600 ms |
+- `display_task1()` takes 200 ms.
+- `display_task2()` takes 100 ms.
+
+### Selected cycle values
+
+The following values are selected for the static cyclic schedule:
+
+Major cycle: M = 1600 ms  
+Minor cycle: m = 400 ms
+
+The following sections verify that these values satisfy the scheduling
+requirements.
+
+### Major cycle validation
+
+The major cycle is the time after which the complete schedule repeats.
+
+The selected major cycle is:
+
+M = 1600 ms
+
+For a valid cyclic schedule, `M` must be a common multiple of all task periods.
+The smallest common multiple is calculated as follows:
+
+M = lcm(400 ms, 800 ms, 1600 ms)  
+M = 1600 ms
+
+The major cycle must also be a multiple of the selected minor cycle:
+
+M = 1600 ms  
+m = 400 ms  
+M / m = 1600 / 400 = 4
+
+The selected major cycle is a multiple of every task period and contains four
+complete minor cycles. Therefore, it is valid.
+
+The number of executions of a task during one major cycle is calculated as:
+
+Number of executions = M / T
+
+| Task | Period | Executions during one major cycle |
 |---|---:|---:|
 | Speed and distance | 400 ms | 4 |
 | Gear | 800 ms | 2 |
-| Temperature | 1600 ms | 1 |
 | Reset | 800 ms | 2 |
-| Display | 1600 ms | 1 |
+| Temperature | 1600 ms | 1 |
+| Display task 1 | 1600 ms | 1 |
+| Display task 2 | 1600 ms | 1 |
 
-
-### Minor cycle
+### Minor cycle validation
 
 The minor cycle is the duration of one frame in the cyclic schedule.
 
-A suitable minor cycle is **400 ms**, which is the greatest common divisor of the task periods.
+The selected minor cycle is:
 
-Note: This value also depends on the computation time of each task. In our scheduling, the Display task requires 300 ms in total, but can be split into two subtasks so that the display updates can be placed in different frames without exceeding the 400 ms limit.
+m = 400 ms
 
-The 400 ms minor cycle value means that the 1600 ms major cycle is divided into four minor cycles:
+The following checks validate this value.
 
-| Frame | Time interval |
-|---|---|
-| 1 | 0–400 ms |
-| 2 | 400–800 ms |
-| 3 | 800–1200 ms |
-| 4 | 1200–1600 ms |
+#### 1. A task executes at most once per frame
 
+For every task τ<sub>i</sub> , the minor cycle must not be longer than the task period T<sub>i</sub>:
+
+∀ τ<sub>i</sub> ; m <= T<sub>i</sub>
+
+The smallest task period is 400 ms:
+
+m = 400 ms  
+T<sub>min</sub> = 400 ms  
+400 ms <= 400 ms
+
+This condition is satisfied for every task.
+
+#### 2. Every task fits in one frame
+
+For every task τ<sub>i</sub> , or every subtask when a task is split, the computation time
+C<sub>i</sub> must fit inside one minor cycle:
+
+∀ τ<sub>i</sub> ; m >= C<sub>i</sub>
+
+The longest individual task or subtask has a computation time of 200 ms:
+
+m = 400 ms  
+C<sub>max</sub> = 200 ms  
+400 ms >= 200 ms
+
+This condition is satisfied for every task and subtask.
+
+#### 3. Every task has a frame before its deadline
+
+For every task τ<sub>i</sub> , there must be at least one complete frame in which the task
+can execute between its release time and its deadline D<sub>i</sub>:
+
+2m - gcd(T<sub>i</sub>, m) <= D<sub>i</sub>
+
+In this project, D<sub>i</sub> = T<sub>i</sub> for every task.
+
+| Period T<sub>i</sub> | Deadline D<sub>i</sub> | gcd(T<sub>i</sub>, m) | Calculation | Valid |
+|---:|---:|---:|---|---|
+| 400 ms | 400 ms | 400 ms | 2 x 400 - 400 = 400 ms | 400 ms <= 400 ms |
+| 800 ms | 800 ms | 400 ms | 2 x 400 - 400 = 400 ms | 400 ms <= 800 ms |
+| 1600 ms | 1600 ms | 400 ms | 2 x 400 - 400 = 400 ms | 400 ms <= 1600 ms |
+
+This condition is satisfied for every task period.
+
+The schedule can therefore use four frames of 400 ms, repeated every 1600 ms.
+
+### Frame allocation
+
+The 1600 ms major cycle is divided into four frames.
+
+| Frame | Time interval | Tasks | Total computation time |
+|---|---|---|---:|
+| 1 | 0-400 ms | Speed and distance, Gear, Reset | 200 + 100 + 100 = 400 ms |
+| 2 | 400-800 ms | Speed and distance, Display task 1 | 200 + 200 = 400 ms |
+| 3 | 800-1200 ms | Speed and distance, Gear, Reset | 200 + 100 + 100 = 400 ms |
+| 4 | 1200-1600 ms | Speed and distance, Display task 2, Temperature | 200 + 100 + 100 = 400 ms |
+
+Every frame contains exactly 400 ms of computation. Therefore, no frame has
+idle time and no task extends into the following frame.
+
+### Deadline verification
+
+For this task set, the deadline is equal to the period:
+
+`D = T`
+
+The absolute deadline of a task instance is:
+
+`Deadline = Phase + (instance number - 1) x Period + Deadline`
+
+| Task instance | Completion time | Absolute deadline | Deadline respected |
+|---|---:|---:|---|
+| Speed and distance 1 | 200 ms | 400 ms | Yes |
+| Speed and distance 2 | 600 ms | 800 ms | Yes |
+| Speed and distance 3 | 1000 ms | 1200 ms | Yes |
+| Speed and distance 4 | 1400 ms | 1600 ms | Yes |
+| Gear 1 | 300 ms | 800 ms | Yes |
+| Gear 2 | 1100 ms | 1600 ms | Yes |
+| Reset 1 | 400 ms | 800 ms | Yes |
+| Reset 2 | 1200 ms | 1600 ms | Yes |
+| Display task 1 | 800 ms | 1600 ms | Yes |
+| Display task 2 | 1500 ms | 1600 ms | Yes |
+| Temperature | 1600 ms | 1600 ms | Yes |
+
+All task instances complete at or before their respective deadlines.
+
+### Schedule validation
+
+The selected cycle values and the frame allocation have been validated.
+
+- The major cycle is a common multiple of every task period.
+- The major cycle contains four complete minor cycles.
+- Every task or subtask fits entirely in one frame.
+- The computation time allocated in every frame is equal to or less than 400 ms.
+- No task starts before its release time.
+- Every task instance completes at or before its deadline.
+
+Therefore, the task set is schedulable using the selected static cyclic
+schedule.
+
+Major cycle: M = 1600 ms  
+Minor cycle: m = 400 ms  
+Number of frames: M / m = 4
+
+### Implemented schedule
+
+The super-loop implements the four frames in the following order:
+
+```cpp
+// Frame 1: 0-400 ms
+speed_distance_task();
+gear_task();
+reset_task();
+
+// Frame 2: 400-800 ms
+speed_distance_task();
+display_task1();
+
+// Frame 3: 800-1200 ms
+speed_distance_task();
+gear_task();
+reset_task();
+
+// Frame 4: 1200-1600 ms
+speed_distance_task();
+display_task2();
+temperature_task();
+```
+
+After frame 4, the super-loop restarts with frame 1.
 
 ### Processor utilisation
 
-The processor utilisation factor is calculated by adding the computation time divided by the period for each task:
+The processor utilisation is calculated from the original task set:
 
-`U = 200/400 + 100/800 + 100/1600 + 100/800 + 300/1600`
+U = Σ (C<sub>i</sub> / T<sub>i</sub>)
 
-`U = 0.5 + 0.125 + 0.0625 + 0.125 + 0.1875`
+The Display task is counted once with its total computation time of 300 ms.
 
-`U = 1.0 = 100%`
+U = (200 / 400) + (100 / 800) + (100 / 800) + (100 / 1600) + (300 / 1600)  
+U = 0.5 + 0.125 + 0.125 + 0.0625 + 0.1875  
+U = 1.0 = 100%
 
-Therefore, the processor utilisation is **100%**. The processor has no idle time during the major cycle.
+The processor utilisation is **100%**. This is consistent with the frame
+allocation: each of the four 400 ms frames contains exactly 400 ms of
+computation time. Therefore, the processor has no idle time during the
+1600 ms major cycle.
 
 ### Major cycle timeline
 
 The following diagram shows the complete 1600 ms major cycle.
 
 ![Timeline of one 1600 ms major cycle](images/bike-static-scheduling-major-cycle.png)
+
+
