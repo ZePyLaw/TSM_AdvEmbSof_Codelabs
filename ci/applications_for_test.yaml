@@ -3,3 +3,9 @@ tests:
     tags: ["cpp"]
     boards:
       - board: qemu_x86
+
+    # Phase B: BikeComputer Part I
+  - root: bike_computer/tests
+    tags: ["phase_b"]
+    boards:
+      - board: qemu_x86

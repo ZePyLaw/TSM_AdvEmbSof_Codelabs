@@ -5,3 +5,9 @@ endmenu
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"
+
+config BIKE_COMPUTER_STATIC_SCHEDULING
+  bool "Build system with static scheduling"
+  default n
+  help
+    This option must be enabled to use the static scheduling version.

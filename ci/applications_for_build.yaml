@@ -26,3 +26,13 @@ applications:
       - sensor
       - log+debug+sensor
     config_dir: ../deps/zpp_lib/configs
+
+  # Phase B: BikeComputer Part I
+  - app: bike_computer
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+        shield: adafruit_2_8_tft_touch_v2
+      - board: qemu_x86
+    configs:
+      - log+debug+gpio+display+sensor
+    app_config: prj_static_scheduling.conf
