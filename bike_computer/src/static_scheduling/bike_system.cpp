@@ -75,18 +75,18 @@ zpp_lib::ZephyrResult BikeSystem::start() {
     // Major cycle: 1600 ms
     speed_distance_task();
     gear_task();
-    temperature_task();
+    reset_task();
 
     speed_distance_task();
-    reset_task();
     display_task1();
 
     speed_distance_task();
     gear_task();
+    reset_task();
 
     speed_distance_task();
-    reset_task();
     display_task2();
+    temperature_task();
 
     // register the time at the end of the cyclic schedule period and print the
     // elapsed time for the period
