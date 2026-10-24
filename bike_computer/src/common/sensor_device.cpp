@@ -54,7 +54,7 @@ zpp_lib::ZephyrResult SensorDevice::read_temperature(float& temperature) {
 
 #if !CONFIG_EMUL
   // Create a variable to hold the sensor reading
-  struct sensor_value sensor_value;
+  struct sensor_value sensor_value{};
 
   // Fetch data from the sensor
   if (sensor_sample_fetch(_sensor_device) < 0) {
@@ -88,7 +88,7 @@ zpp_lib::ZephyrResult SensorDevice::read_humidity(float& humidity) {
 
 #if !CONFIG_EMUL
   // Create a variable for the sensor value
-  struct sensor_value sensor_value;
+  struct sensor_value sensor_value{};
 
   // Fetch data from the sensor
   if (sensor_sample_fetch(_sensor_device) < 0) {

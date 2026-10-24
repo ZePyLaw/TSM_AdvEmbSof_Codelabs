@@ -2,7 +2,7 @@ name: Test AES workspace
 
 on:
   # push:               # Run the workflow on every push to any branch
-  # pull_request:       # Run the workflow on every pull request
+  pull_request:       # Run the workflow on every pull request
   workflow_dispatch:    # Allow manual triggering from the GitHub Actions UI
 
 jobs:

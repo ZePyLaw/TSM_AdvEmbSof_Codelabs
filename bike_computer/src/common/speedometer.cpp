@@ -144,13 +144,13 @@ void Speedometer::compute_speed() {
   static constexpr auto kMetersPerKilometer    = 1000.0F;
 
   // Compute the distance of each pedal rotation (m)
-  float distance_per_turn = (static_cast<float>(kTraySize) / _gear_size) * kWheelCircumference;
+  float distance_per_turn = (static_cast<float>(kTraySize) / static_cast<float>(_gear_size)) * kWheelCircumference;
 
   // Check that _pedal_rotation_time is never 0
   if (_pedal_rotation_time.count() > 0) {
 
     // Compute the pedal rotations per hour (from rotation/ms to rotation/hour)
-    float rotation_per_hour = kMillisecondsPerHour / _pedal_rotation_time.count();
+    float rotation_per_hour = static_cast<float>(kMillisecondsPerHour) / static_cast<float>(_pedal_rotation_time.count());
 
     // Compute the current speed (km/h)
     _current_speed = (distance_per_turn * rotation_per_hour) / kMetersPerKilometer;

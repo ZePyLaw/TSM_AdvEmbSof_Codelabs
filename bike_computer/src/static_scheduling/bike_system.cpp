@@ -45,6 +45,10 @@ ZPP_LOG_MODULE_DECLARE(bike_computer, CONFIG_APP_LOG_LEVEL);
 
 namespace bike_computer::static_scheduling {
 
+// Define the destructor declared in bike_system.hpp.
+// The compiler handles the destruction of all member objects.
+BikeSystem::~BikeSystem() = default;
+
 // The complexity is increased by zephyr macros
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 zpp_lib::ZephyrResult BikeSystem::start() {
@@ -54,7 +58,7 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 
   auto res = initialize();
   if (!res) {
-    ZPP_LOG_ERR("Init failed: %d", (int)res.error());
+    ZPP_LOG_ERR("Init failed: %d", static_cast<int>(res.error()));
     return res;
   }
 
@@ -111,14 +115,14 @@ zpp_lib::ZephyrResult BikeSystem::initialize() {
   // initialize the display
   auto res = _bike_display.initialize();
   if (!res) {
-    ZPP_LOG_ERR("Cannot initialize display: %d", (int)res.error());
+    ZPP_LOG_ERR("Cannot initialize display: %d", static_cast<int>(res.error()));
     return res;
   }
 
   // initialize the sensor device
   res = _sensor_device.initialize();
   if (!res) {
-    ZPP_LOG_ERR("Sensor not present or initialization failed: %d", (int)res.error());
+    ZPP_LOG_ERR("Sensor not present or initialization failed: %d", static_cast<int>(res.error()));
   }
 
   return {};
@@ -155,7 +159,7 @@ void BikeSystem::temperature_task() {
   // no need to protect access to data members (single threaded)
   zpp_lib::ZephyrResult res = _sensor_device.read_temperature(_current_temperature);
   if (!res) {
-    ZPP_LOG_ERR("Cannot read temperature: %d", (int)res.error());
+    ZPP_LOG_ERR("Cannot read temperature: %d", static_cast<int>(res.error()));
   }
 
   // simulate task computation by waiting for the required task computation time
