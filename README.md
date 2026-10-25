@@ -540,3 +540,21 @@ Because the reset condition relies strictly on polling at the exact moment `rese
 #### Why these behaviors are problematic:
 - **Unreliability:** The interface is non-deterministic for the user, who is forced to guess how long to hold the button to ensure their action is registered.
 - **Poor User Experience:** A highly variable latency gives the impression of a slow, unstable, or defective device, which is unacceptable for a real-time embedded system.
+
+## Phase B - Bike Computer - Part 2
+
+### Question 1 - CPU load with Busy Waits
+
+**Observation:** 
+The observed CPU usage is approximately 99%.
+
+**Explanation:** 
+This high load is caused by busy waiting. To simulate task computation times, the program locks the processor in a continuous loop rather than putting it to sleep. Since the CPU is constantly executing instructions, the Zephyr Idle thread never gets a chance to run, resulting in a near 100% CPU load.
+
+### Question 2 - CPU load with Sleep Calls
+
+**Observation:** 
+The observed CPU usage is now around 72%.
+
+**Explanation:** 
+By using sleep calls, we tell the processor to actually rest when it is waiting, instead of running in an empty loop. The 72% represents the time the processor is genuinely busy doing the work (running the tasks, reading sensors, updating the display). During the remaining 28% of the time, the processor is sleeping, which saves resources.

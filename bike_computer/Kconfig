@@ -18,3 +18,10 @@ config BIKE_COMPUTER_STATIC_SCHEDULING
   default n
   help
     This option must be enabled to use the static scheduling version.
+
+config BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT
+  bool "Build system with static scheduling with event"
+  default n
+  help
+    This option must be enabled to use the static scheduling version
+    with event handling enabled

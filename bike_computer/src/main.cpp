@@ -15,11 +15,12 @@
 /****************************************************************************
  * @file main.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
+ # @author Robin Schaerrer <robin.schaerrer@master.hes-so.ch>
  *
- * @brief Main function of the TemplateApplication program
+ * @brief Main function of the BikeComputer program
  *
- * @date 2026-06-18
- * @version 1.0.0
+ * @date 2026-10-25
+ * @version 1.0.1
  ***************************************************************************/
 
 // zephyr
@@ -29,9 +30,12 @@
 // zpp_lib
 #include "zpp_include/zpp_log.hpp"
 
-// Include BikeSystem only when static scheduling is enabled.
+// Include BikeSystem implementations conditionally
 #ifdef CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING
 #include "static_scheduling/bike_system.hpp"
+
+#elif defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT)
+#include "static_scheduling_with_event/bike_system.hpp"
 #endif
 
 ZPP_LOG_MODULE_REGISTER(bike_computer, CONFIG_APP_LOG_LEVEL);
@@ -48,9 +52,18 @@ int main() {
     ZPP_LOG_ERR("BikeSystem failed: %d", static_cast<int>(result.error()));
     return -1;
   }
+
+#elif defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT)
+  // Start the BikeComputer static scheduler with events.
+  bike_computer::static_scheduling_with_event::BikeSystem bike_system;
+
+  auto result = bike_system.start();
+  if (!result) {
+    ZPP_LOG_ERR("BikeSystem with events failed: %d", static_cast<int>(result.error()));
+    return -1;
+  }
 #else
-  // Avoid referencing BikeSystem when this feature is disabled.
-  ZPP_LOG_WRN("BikeComputer static scheduling is disabled");
+  ZPP_LOG_WRN("No BikeComputer scheduling mode enabled");
 #endif
 
   return 0;
