@@ -43,7 +43,6 @@ ZPP_LOG_MODULE_REGISTER(bike_computer, CONFIG_APP_LOG_LEVEL);
 // for ms or s literals
 using std::literals::chrono_literals::operator""s;
 
-// TODO(Student): Validate the test duration for your target platform.
 // The value of TEST_DURATION_IN_MS is set in the test case configuration file (testcase.yaml) and
 // can be overridden for each platform. The value should be set so that the test passes on your platform.
 // It should not be below 20s for any platform.

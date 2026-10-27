@@ -529,6 +529,16 @@ The following diagram shows the complete 1600 ms major cycle.
 ![Timeline of one 1600 ms major cycle](images/bike-static-scheduling-major-cycle.png)
 
 
+### CPU Load Sensitivity Test Result with Super Loop
+
+**Observation:**
+When running the test on the physical board, the system runs successfully for approximately **21 seconds** before failing due to a `TaskManager` assertion error.
+
+**Explanation:**  
+Each 400 ms cycle actually takes 400 ms + ε (the system overhead). This microscopic delay ε accumulates continuously cycle after cycle. The `TaskManager` permits a strict variation (100 ticks). After about 21 seconds, the accumulated RTOS overhead eventually exceeds this 100 ticks tolerance window, causing the test to fail.
+
+This result perfectly demonstrates that purely static scheduling with a theoretical CPU load of 100% is completely unsustainable in the real world, as it cannot even accommodate the basic operations of the RTOS.
+
 ### Question 1 - Response time of the reset event
 
 #### Response time variation:
@@ -558,3 +568,13 @@ The observed CPU usage is now around 72%.
 
 **Explanation:** 
 By using sleep calls, we tell the processor to actually rest when it is waiting, instead of running in an empty loop. The 72% represents the time the processor is genuinely busy doing the work (running the tasks, reading sensors, updating the display). During the remaining 28% of the time, the processor is sleeping, which saves resources.
+
+### CPU Load Sensitivity Test Result with TTCE and Sleep Calls
+
+**Observation:**  
+When running the test on the physical board with TTCE and sleep calls (CPU load ~72%), the system runs successfully for approximately **22.5 seconds** before failing due to a `TaskManager` assertion error.
+
+**Explanation:**  
+Even with sleep calls reducing the actual CPU load, the theoretical schedule still demands 400 ms of work per 400 ms frame (U = 1). Therefore, the microscopic RTOS overhead delay ε continues to accumulate every cycle. While the sleep mechanisms slightly extend the uptime to 22.5s, the accumulated delay still inevitably exceeds the 100 ticks tolerance. 
+
+This confirms that simply lowering actual CPU usage is insufficient; a static schedule with 100% theoretical utilization remains unsustainable because it provides no slack time for essential OS operations.
