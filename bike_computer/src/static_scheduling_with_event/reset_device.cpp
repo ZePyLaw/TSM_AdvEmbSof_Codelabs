@@ -33,9 +33,13 @@ ResetDevice::ResetDevice()
     : _button1(zpp_lib::InterruptIn::PinName::BUTTON1), _button1_token(_button1.add_callback([this]() { on_fall_button1(); })) {}
 
 bool ResetDevice::check_reset() {
-  // Keep the Part I polling behavior, where a short press can be missed between
-  // two reset tasks. event-driven will be implemented later (part II)
-  return _button1.read() == zpp_lib::kPolarityPressed;
+  // Load flag with acquire to sync with ISR state write
+  if (_button1_state.load(std::memory_order_acquire)) {
+    // Clear flag with relaxed order (atomic write, no ordering constraints)
+    _button1_state.store(false, std::memory_order_release);
+    return true;
+  }
+  return false;
 }
 
 std::chrono::microseconds ResetDevice::get_press_time() {
@@ -44,8 +48,11 @@ std::chrono::microseconds ResetDevice::get_press_time() {
 
 void ResetDevice::on_fall_button1() {
   // Timestamp the physical button edge as early as possible in the ISR.
-  // Do not trigger the reset here,, BikeSystem handles it periodically.
+  // Do not trigger the reset here, BikeSystem handles it periodically.
   _press_time = zpp_lib::Time::get_uptime();
+
+  // Set flag with release to safely publish the state change
+  _button1_state.store(true, std::memory_order_release);
 }
 
 }  // namespace bike_computer::static_scheduling_with_event

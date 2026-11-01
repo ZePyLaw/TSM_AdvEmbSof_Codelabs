@@ -38,7 +38,8 @@ namespace bike_computer::static_scheduling_with_event {
 // Initialize the hardware button wrappers before entering the super-loop.
 PedalDevice::PedalDevice()
     : _button2(zpp_lib::InterruptIn::PinName::BUTTON2), _button3(zpp_lib::InterruptIn::PinName::BUTTON3),
-      _button4(zpp_lib::InterruptIn::PinName::BUTTON4) {}
+      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { on_fall_button3(); })),
+      _button4_token(_button4.add_callback([this]() { on_fall_button4(); })) {}
 
 std::chrono::milliseconds PedalDevice::get_current_rotation_time() {
   const auto initial_time = zpp_lib::Time::get_uptime();
@@ -48,12 +49,15 @@ std::chrono::milliseconds PedalDevice::get_current_rotation_time() {
   // if the user keeps a button pressed during the polling loop for example
   bool has_changed = false;
   while (elapsed_time < TaskManager::get_task_computation_time(TaskManager::TaskType::SpeedTaskType)) {
-    // Button 2 is the gear modifier, so we ignore pedal changes while it is held.
-    if (!has_changed && _button2.read() != zpp_lib::kPolarityPressed) {
-      if (_button3.read() == zpp_lib::kPolarityPressed) {
+    if (!has_changed) {
+      // Atomically consume the button 3 event
+      if (_button3_state.exchange(false, std::memory_order_acquire)) {
         decrease_rotation_speed();
         has_changed = true;
-      } else if (_button4.read() == zpp_lib::kPolarityPressed) {
+      }
+
+      // Atomically consume the button 4 event
+      if (_button4_state.exchange(false, std::memory_order_acquire)) {
         increase_rotation_speed();
         has_changed = true;
       }
@@ -83,6 +87,26 @@ void PedalDevice::decrease_rotation_speed() {
     if (_pedal_rotation_time > bike_computer::kMaxPedalRotationTime) {
       _pedal_rotation_time = bike_computer::kMaxPedalRotationTime;
     }
+  }
+}
+
+void PedalDevice::on_fall_button3() {
+  // Button 2 is a modifier: read its current state instead of registering
+  // an interrupt, since InterruptIn only provides falling-edge callbacks.
+  // Pedal adjustments are allowed only when button 2 is released.
+  if (_button2.read() != zpp_lib::kPolarityPressed) {
+    // Publish the button 3 event to the task
+    _button3_state.store(true, std::memory_order_release);
+  }
+}
+
+void PedalDevice::on_fall_button4() {
+  // Button 2 is a modifier: read its current state instead of registering
+  // an interrupt, since InterruptIn only provides falling-edge callbacks.
+  // Pedal adjustments are allowed only when button 2 is released.
+  if (_button2.read() != zpp_lib::kPolarityPressed) {
+    // Publish the button 4 event to the task
+    _button4_state.store(true, std::memory_order_release);
   }
 }
 

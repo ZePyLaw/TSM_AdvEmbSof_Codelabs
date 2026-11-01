@@ -71,50 +71,62 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 
   // minor cycle 0
   res = _ttce.add_task(0, [this]() { this->speed_distance_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(0, [this]() { this->gear_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(0, [this]() { this->reset_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
 
   // minor cycle 1
   res = _ttce.add_task(1, [this]() { this->speed_distance_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(1, [this]() { this->display_task1(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
 
   // minor cycle 2
   res = _ttce.add_task(2, [this]() { this->speed_distance_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(2, [this]() { this->gear_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(2, [this]() { this->reset_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
 
   // minor cycle 3
   res = _ttce.add_task(3, [this]() { this->speed_distance_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(3, [this]() { this->display_task2(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
   res = _ttce.add_task(3, [this]() { this->temperature_task(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
 
   // log the cpu load
 #ifdef CONFIG_CPU_LOAD
   res = _ttce.add_task(3, []() { zpp_lib::Utils::log_cpu_load(); });
-  if (!res)
+  if (!res) {
     return res;
+  }
 #endif
 
   // Start the scheduler (this method will block as long as _ttce is running)

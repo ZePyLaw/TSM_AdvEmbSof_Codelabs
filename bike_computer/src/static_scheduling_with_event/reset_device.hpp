@@ -26,7 +26,11 @@
 #pragma once
 
 // std
+#include <atomic>
 #include <chrono>
+
+// Ensure atomic bool operations are lock-free for ISR usage.
+static_assert(std::atomic<bool>::is_always_lock_free, "Atomic bool must be lock-free for ISR usage");
 
 // zpp_lib
 #include "zpp_include/interrupt_in.hpp"
@@ -50,7 +54,12 @@ private:
   // Called by zpp_lib when the button interrupt occurs (ISR context).
   void on_fall_button1();
 
+  // Hardware input used to detect button presses.
   zpp_lib::InterruptIn _button1;
+
+  // Button state flag
+  std::atomic<bool> _button1_state{false};
+
   // RAII token unregisters the callback when the object is destroyed.
   zpp_lib::RegistrationToken _button1_token;
   std::chrono::microseconds _press_time{std::chrono::microseconds::zero()};

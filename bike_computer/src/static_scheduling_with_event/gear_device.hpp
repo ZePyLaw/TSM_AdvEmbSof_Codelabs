@@ -25,6 +25,12 @@
 
 #pragma once
 
+// std
+#include <atomic>
+
+// Ensure atomic bool operations are lock-free for ISR usage.
+static_assert(std::atomic<bool>::is_always_lock_free, "Atomic bool must be lock-free for ISR usage");
+
 // local
 #include "common/constants.hpp"
 
@@ -49,6 +55,10 @@ public:
   [[nodiscard]] uint8_t get_current_gear_size() const;
 
 private:
+  // Called by zpp_lib when the buttons interrupts occurs (ISR context).
+  void on_fall_button3();
+  void on_fall_button4();
+
   // Start with the minimum gear defined in the common constants.
   uint8_t _current_gear = bike_computer::kMinGear;
 
@@ -56,6 +66,14 @@ private:
   zpp_lib::InterruptIn _button2;
   zpp_lib::InterruptIn _button3;
   zpp_lib::InterruptIn _button4;
+
+  // Button state flags
+  std::atomic<bool> _button3_state{false};
+  std::atomic<bool> _button4_state{false};
+
+  // RAII token unregisters the callback when the object is destroyed.
+  zpp_lib::RegistrationToken _button3_token;
+  zpp_lib::RegistrationToken _button4_token;
 };
 
 }  // namespace bike_computer::static_scheduling_with_event

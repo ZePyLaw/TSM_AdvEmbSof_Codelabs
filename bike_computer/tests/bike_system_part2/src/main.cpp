@@ -50,7 +50,7 @@ using std::literals::chrono_literals::operator""s;
 static constexpr std::chrono::milliseconds kTestDuration(CONFIG_TEST_DURATION_IN_MS);
 
 // test_bike_system_ttce handler function
-ZPP_ZTEST(bike_system_part, test_bike_system_ttce) {
+ZPP_ZTEST(bike_system_part2, test_bike_system_ttce) {
   // create the BikeSystem instance
   bike_computer::static_scheduling_with_event::BikeSystem bike_system;
 
