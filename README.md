@@ -532,12 +532,16 @@ The following diagram shows the complete 1600 ms major cycle.
 ### CPU Load Sensitivity Test Result with Super Loop
 
 **Observation:**
-When running the test on the physical board, the system runs successfully for approximately **21 seconds** before failing due to a `TaskManager` assertion error.
+The Part I Super Loop test successfully completed on the physical nRF5340DK with CONFIG_TEST_DURATION_IN_MS=21000.
+
+In a separate execution configured for 22000 ms, the test failed after approximately 23.1 seconds due to a TaskManager timing assertion. The Display(2) task started 81 microseconds beyond the permitted timing tolerance.
 
 **Explanation:**  
-Each 400 ms cycle actually takes 400 ms + ε (the system overhead). This microscopic delay ε accumulates continuously cycle after cycle. The `TaskManager` permits a strict variation (100 ticks). After about 21 seconds, the accumulated RTOS overhead eventually exceeds this 100 ticks tolerance window, causing the test to fail.
+The theoretical schedule has a processor utilization of 100%, as each 400 ms frame contains exactly 400 ms of simulated computation.
 
-This result perfectly demonstrates that purely static scheduling with a theoretical CPU load of 100% is completely unsustainable in the real world, as it cannot even accommodate the basic operations of the RTOS.
+In practice, additional execution overhead, interrupts and scheduling jitter may introduce small delays. Since the schedule has no nominal slack time, these delays can affect the timing of subsequent tasks.
+
+The experimental results demonstrate that the Super Loop is sensitive to timing deviations. The successful 21-second execution confirms correct behavior over that tested interval, but does not guarantee that every longer execution will meet the timing constraints.
 
 ### Question 1 - Response time of the reset event
 
@@ -572,17 +576,87 @@ By using sleep calls, we tell the processor to actually rest when it is waiting,
 ### CPU Load Sensitivity Test Result with TTCE and Sleep Calls
 
 **Observation:**  
-When running the test on the physical board with TTCE and sleep calls (CPU load ~72%), the system runs successfully for approximately **22.5 seconds** before failing due to a `TaskManager` assertion error.
+In the initial Part II implementation, the CPU load was approximately 72%, despite using sleep calls in TaskManager.
+
+With CONFIG_TEST_DURATION_IN_MS=30000, the system test failed on the physical nRF5340DK after approximately 23.5 seconds due to a timing assertion. The Temperature task started 111 microseconds beyond the permitted tolerance.
+
+Investigation revealed that GearDevice and PedalDevice still contained active polling loops that occupied the CPU during their simulated task computation times.
 
 **Explanation:**  
-Even with sleep calls reducing the actual CPU load, the theoretical schedule still demands 400 ms of work per 400 ms frame (U = 1). Therefore, the microscopic RTOS overhead delay ε continues to accumulate every cycle. While the sleep mechanisms slightly extend the uptime to 22.5s, the accumulated delay still inevitably exceeds the 100 ticks tolerance. 
+Although TaskManager was configured to use sleep calls, the active polling loops inside these two device classes prevented the CPU from sleeping during a substantial portion of the scheduled workload.
 
-This confirms that simply lowering actual CPU usage is insufficient; a static schedule with 100% theoretical utilization remains unsustainable because it provides no slack time for essential OS operations.
+Furthermore, each 400 ms frame was theoretically filled with 400 ms of computation. The absence of nominal slack made the schedule sensitive to small runtime overheads.
+
+This motivated the correction described in Question 3: removing the active polling loops and using the interrupt callbacks to record button events, while allowing TaskManager to simulate execution time through sleep calls.
 
 ### Question 3 - CPU Load with Static Scheduling and Event-Driven Button Handling
 
 **Observation:**
-The observed CPU usage remains approximately 72%.
+After correcting the event-driven implementation, the CPU load measured on the physical nRF5340DK was approximately 18.4% on average, with observed values ranging from approximately 16% to 23%.
+
+This is substantially lower than the approximately 72% previously observed with the initial implementation.
+
+The physical buttons were tested successfully, and the Part II system test passed on the nRF5340DK with CONFIG_TEST_DURATION_IN_MS=45000. The measured test execution duration was 45.474 seconds.
 
 **Explanation:** 
-Although button handling has been changed from polling to an event-driven approach using interrupts, the overall CPU usage remains approximately the same. The interrupt callbacks are only executed when a button is pressed, avoiding the need to continuously poll the button states. However, the statically scheduled tasks still execute periodically, and their computational workload has not necessarily changed. Therefore, the event-driven approach reduces unnecessary button-state checking but does not significantly reduce the CPU load generated by the other scheduled tasks. The processor still spends approximately the same amount of time executing application tasks, while the remaining time can be spent in the Zephyr Idle thread.
+The initial event-driven implementation registered GPIO interrupt callbacks using InterruptIn::add_callback() and stored the resulting events in atomic flags.
+
+However, GearDevice and PedalDevice still contained busy-wait loops that continuously checked these flags for the simulated computation time of their respective tasks.
+
+As a result, the callbacks were present, but the processor remained active unnecessarily.
+
+The implementation was corrected by removing these polling loops. The GPIO callbacks now record button events, while the scheduled tasks consume the atomic event flags without continuously polling them.
+
+The simulated computation times are handled by TaskManager using sleep calls, allowing Zephyr to execute its idle thread during the remaining time.
+
+This explains the significantly lower measured CPU load.
+
+**Conclusion**
+
+Event-driven button handling, combined with the removal of unnecessary busy-wait loops, reduces the actual CPU load significantly.
+
+The static schedule itself remains unchanged: the TTCE still executes four 400 ms minor cycles within a 1600 ms major cycle.
+
+The observed reduction from approximately 72% to 18.4% reflects the combined implementation changes, rather than an isolated measurement of the callbacks alone.
+
+### Question 4 - Reset Response Time: Polling vs. Event-Driven Handling
+
+**Part I - Polling approach:**
+
+In Part I, the reset task executes every 800 ms and checks the physical state of button 1.
+
+The reset is performed only if the button is still pressed when the task executes.
+
+Therefore, a short press that occurs entirely between two executions of the reset task can be missed.
+
+The response time also depends on when the button is pressed relative to the periodic task execution.
+
+**Part II - Event-driven approach:**
+
+In Part II, a GPIO interrupt callback is registered for button 1 using `InterruptIn::add_callback()`.
+
+When the button is pressed, the callback immediately records the press timestamp and sets an atomic flag.
+
+The periodic reset task subsequently checks and consumes this flag to perform the reset.
+
+Unlike the polling implementation, the event-driven implementation can preserve a short button press even when the button has already been released before the next execution of the reset task.
+
+**Response-time comparison:**
+
+| Characteristic | Part I - Polling | Part II - Event-driven |
+|---|---|---|
+| Button detection | Physical button state checked periodically | GPIO interrupt callback |
+| Reset task period | 800 ms | 800 ms |
+| Short button presses | May be missed | Recorded by an atomic event flag |
+| Reset execution | During the next reset task execution, if the button is still pressed | During the next reset task execution, if an event is pending |
+| Theoretical processing delay | Approximately 0 to 800 ms for detected presses | Approximately 0 to 800 ms |
+
+The theoretical delay range excludes execution overhead and scheduling jitter.
+
+**Conclusion:**
+
+Event-driven handling significantly improves the reliability of reset event detection because the button does not need to remain pressed until the next scheduled task execution.
+
+However, the actual reset operation is still performed periodically by `reset_task()`, so the event-driven architecture does not automatically reduce the maximum theoretical processing delay.
+
+The reset button was verified to work on the physical nRF5340DK. No controlled series of response-time measurements was recorded, so the response-time bounds presented above are theoretical rather than experimental measurements.

@@ -17,7 +17,6 @@
  * @author Serge Ayer <serge.ayer@hefr.ch>
  * @author Alexandre Schmid <alexandre.schmid@master.hes-so.ch>
  *
- *
  * @brief GearDevice implementation (static scheduling)
  *
  * @date 2026-10-20
@@ -25,12 +24,6 @@
  ***************************************************************************/
 
 #include "gear_device.hpp"
-
-// from common
-#include "common/task_manager.hpp"
-
-// zpp_lib
-#include "zpp_include/time.hpp"
 
 namespace bike_computer::static_scheduling_with_event {
 
@@ -40,39 +33,24 @@ GearDevice::GearDevice()
       _button4_token(_button4.add_callback([this]() { on_fall_button4(); })) {}
 
 uint8_t GearDevice::get_current_gear() {
-  std::chrono::microseconds initial_time = zpp_lib::Time::get_uptime();
-  std::chrono::microseconds elapsed_time = std::chrono::microseconds::zero();
-
-  // we bound the change to one decrement/increment per call
-  // we increment/decrement rotation speed when button3/button4 is pressed
-  // while button2 is pressed
-  bool has_changed = false;
-  while (elapsed_time < TaskManager::get_task_computation_time(TaskManager::TaskType::GearTaskType)) {
-    if (!has_changed) {
-      // Atomically consume the button 3 event
-      if (_button3_state.exchange(false, std::memory_order_acquire)) {
-        if (_current_gear > bike_computer::kMinGear) {
-          _current_gear--;
-        }
-        has_changed = true;
-      }
-
-      // Atomically consume the button 4 event
-      if (_button4_state.exchange(false, std::memory_order_acquire)) {
-        if (_current_gear < bike_computer::kMaxGear) {
-          _current_gear++;
-        }
-        has_changed = true;
-      }
+  // Consume events captured by the interrupt callbacks.
+  // The TaskManager handles the simulated computation time.
+  if (_button3_state.exchange(false, std::memory_order_acquire)) {
+    if (_current_gear > bike_computer::kMinGear) {
+      _current_gear--;
     }
-    elapsed_time = zpp_lib::Time::get_uptime() - initial_time;
   }
+
+  if (_button4_state.exchange(false, std::memory_order_acquire)) {
+    if (_current_gear < bike_computer::kMaxGear) {
+      _current_gear++;
+    }
+  }
+
   return _current_gear;
 }
 
 uint8_t GearDevice::get_current_gear_size() const {
-  // simulate task computation by waiting for the required task run time
-  // wait_us(kTaskRunTime.count());
   return bike_computer::kMaxGearSize - _current_gear;
 }
 
@@ -81,7 +59,6 @@ void GearDevice::on_fall_button3() {
   // an interrupt, since InterruptIn only provides falling-edge callbacks.
   // Gear adjustments are allowed only while button 2 is pressed.
   if (_button2.read() == zpp_lib::kPolarityPressed) {
-    // Publish the button 3 event to the task
     _button3_state.store(true, std::memory_order_release);
   }
 }
@@ -91,7 +68,6 @@ void GearDevice::on_fall_button4() {
   // an interrupt, since InterruptIn only provides falling-edge callbacks.
   // Gear adjustments are allowed only while button 2 is pressed.
   if (_button2.read() == zpp_lib::kPolarityPressed) {
-    // Publish the button 4 event to the task
     _button4_state.store(true, std::memory_order_release);
   }
 }
