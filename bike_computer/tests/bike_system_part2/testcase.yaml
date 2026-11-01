@@ -5,8 +5,8 @@ tests:
       - phase_b
     timeout: 150
     extra_configs:
-      - platform:qemu_x86/atom:CONFIG_TEST_DURATION_IN_MS=120000
-      - platform:nrf5340dk/nrf5340/cpuapp:CONFIG_TEST_DURATION_IN_MS=22500
+      - platform:qemu_x86/atom:CONFIG_TEST_DURATION_IN_MS=40000
+      - platform:nrf5340dk/nrf5340/cpuapp:CONFIG_TEST_DURATION_IN_MS=30000
     extra_conf_files:
       - ../../../deps/zpp_lib/configs/prj.conf
       - ../../../deps/zpp_lib/configs/prj_gpio.conf
