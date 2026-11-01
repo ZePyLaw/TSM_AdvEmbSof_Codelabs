@@ -6,7 +6,6 @@ applications:
     configs:
       - gpio
       - log+debug+gpio
-    configs_dir: deps/zpp_lib/configs
 
   - app: sanitize
     boards:
@@ -16,7 +15,6 @@ applications:
       - shell
       - shell+debug
       - shell+san
-    configs_dir: deps/zpp_lib/configs
 
   - app: bme280
     boards:
@@ -25,7 +23,6 @@ applications:
     configs:
       - sensor
       - log+debug+sensor
-    configs_dir: deps/zpp_lib/configs
 
   # Phase B: BikeComputer Part I - Super Loop
   - app: bike_computer
@@ -35,7 +32,6 @@ applications:
       - board: qemu_x86
     configs:
       - log+debug+gpio+display+sensor
-    configs_dir: deps/zpp_lib/configs
     app_config: prj_static_scheduling.conf
 
   # Phase B: BikeComputer Part II - TTCE and event-driven scheduling
@@ -46,5 +42,4 @@ applications:
       - board: qemu_x86
     configs:
       - log+debug+gpio+display+sensor+log_cpu
-    configs_dir: deps/zpp_lib/configs
     app_config: prj_static_scheduling_with_event.conf
