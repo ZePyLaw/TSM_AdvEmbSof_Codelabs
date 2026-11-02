@@ -2,10 +2,12 @@ tests:
   - root: simple_tests
     tags: ["cpp"]
     boards:
+      - board: nrf5340dk/nrf5340/cpuapp
       - board: qemu_x86
 
-    # Phase B: BikeComputer Part I
+  # Phase B: BikeComputer tests
   - root: bike_computer/tests
     tags: ["phase_b"]
     boards:
+      - board: nrf5340dk/nrf5340/cpuapp
       - board: qemu_x86
