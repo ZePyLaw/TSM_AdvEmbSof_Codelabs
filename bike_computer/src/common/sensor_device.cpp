@@ -38,7 +38,8 @@ zpp_lib::ZephyrResult SensorDevice::initialize() {
   _sensor_device = DEVICE_DT_GET(DT_INST(0, bosch_bme280));
 
   // Check wether the sensor device is ready
-  if (!device_is_ready(_sensor_device)) {
+  const bool device_ready = device_is_ready(_sensor_device);
+  if (!device_ready) {
     result.assign_error(zpp_lib::ZephyrErrorCode::Nxio);
   }
 #else
@@ -57,13 +58,15 @@ zpp_lib::ZephyrResult SensorDevice::read_temperature(float& temperature) {
   struct sensor_value sensor_value{};
 
   // Fetch data from the sensor
-  if (sensor_sample_fetch(_sensor_device) < 0) {
+  const int fetch_result = sensor_sample_fetch(_sensor_device);
+  if (fetch_result < 0) {
     result.assign_error(zpp_lib::ZephyrErrorCode::Io);
     return result;
   }
 
   // Retrive the temperature from the sensor
-  if (sensor_channel_get(_sensor_device, SENSOR_CHAN_AMBIENT_TEMP, &sensor_value) < 0) {
+  const int channel_result = sensor_channel_get(_sensor_device, SENSOR_CHAN_AMBIENT_TEMP, &sensor_value);
+  if (channel_result < 0) {
     result.assign_error(zpp_lib::ZephyrErrorCode::Io);
     return result;
   }
@@ -91,13 +94,15 @@ zpp_lib::ZephyrResult SensorDevice::read_humidity(float& humidity) {
   struct sensor_value sensor_value{};
 
   // Fetch data from the sensor
-  if (sensor_sample_fetch(_sensor_device) < 0) {
+  const int fetch_result = sensor_sample_fetch(_sensor_device);
+  if (fetch_result < 0) {
     result.assign_error(zpp_lib::ZephyrErrorCode::Io);
     return result;
   }
 
   // Retrive the humidity from the sensor
-  if (sensor_channel_get(_sensor_device, SENSOR_CHAN_HUMIDITY, &sensor_value) < 0) {
+  const int channel_result = sensor_channel_get(_sensor_device, SENSOR_CHAN_HUMIDITY, &sensor_value);
+  if (channel_result < 0) {
     result.assign_error(zpp_lib::ZephyrErrorCode::Io);
     return result;
   }

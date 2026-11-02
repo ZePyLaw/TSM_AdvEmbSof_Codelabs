@@ -23,12 +23,20 @@ target_sources(
     src/common/task_manager.cpp
     src/common/resources/fonts_DejaVuSans_16.cpp
     src/common/resources/fonts_DejaVuSans_18.cpp
+)
 
-    # Hardware devices for static scheduling
+# Part 1: Static cyclic scheduling (Super Loop)
+target_sources_ifdef(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING app PRIVATE
     src/static_scheduling/gear_device.cpp
     src/static_scheduling/pedal_device.cpp
     src/static_scheduling/reset_device.cpp
-
-    # BikeComputer static cyclic scheduling
     src/static_scheduling/bike_system.cpp
+)
+
+# Part 2: Static scheduling with event (TTCE & Events)
+target_sources_ifdef(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT app PRIVATE
+    src/static_scheduling_with_event/gear_device.cpp
+    src/static_scheduling_with_event/pedal_device.cpp
+    src/static_scheduling_with_event/reset_device.cpp
+    src/static_scheduling_with_event/bike_system.cpp
 )

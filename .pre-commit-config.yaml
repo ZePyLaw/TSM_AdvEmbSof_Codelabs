@@ -122,13 +122,13 @@ repos:
     files: ^bike_computer/tests/bike_system_part1/.*\.(c|cc|cpp|cxx|h|hpp|hxx)$
 
   # Uncomment when bike_system_part2 is developed.
-  # - id: clang-tidy-bike-computer-bike-system-part2
-  #   name: clang-tidy-bike-computer-bike-system-part2
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part2 --configs "log+debug+gpio+display+sensor+test+phase_b" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(bike_computer/tests/bike_system_part2)/.*\.(c|cc|cpp|cxx)$
+  - id: clang-tidy-bike-computer-bike-system-part2
+    name: clang-tidy-bike-computer-bike-system-part2
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part2 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test+phase_b" --app-config ../../prj_static_scheduling_with_event.conf --header-root "bike_computer" --wd "."
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bike_computer/tests/bike_system_part2)/.*\.(c|cc|cpp|cxx)$
 
   # Uncomment when bike_system_part3 is developed.
   # - id: clang-tidy-bike-computer-bike-system-part3
