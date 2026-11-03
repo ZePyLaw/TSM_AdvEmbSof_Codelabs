@@ -1,5 +1,4 @@
 exclude: ^(welcome/|path_finder/|semaphores/|car_system/)
-
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
@@ -31,16 +30,15 @@ repos:
   hooks:
   - id: clang-tidy-blinky
     name: clang-tidy-blinky
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app blinky --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio" --wd "." --header-root blinky
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app blinky --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio" --header-root "blinky" --wd "."
     language: system
     pass_filenames: true
     require_serial: true
     files: ^(blinky)/.*\.(c|cc|cpp|cxx)$
 
-  
   - id: clang-tidy-bme280
     name: clang-tidy-bme280
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bme280 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+sensor" --wd "." --header-root bme280
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bme280 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+sensor" --header-root "bme280" --wd "."
     language: system
     pass_filenames: true
     require_serial: true
@@ -48,7 +46,7 @@ repos:
 
   - id: clang-tidy-sanitize
     name: clang-tidy-sanitize
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app sanitize --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "shell+log+debug+san" --wd "." --header-root sanitize
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app sanitize --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+shell+san" --header-root "sanitize" --wd "."
     language: system
     pass_filenames: true
     require_serial: true
@@ -56,7 +54,7 @@ repos:
 
   - id: clang-tidy-always-succeed
     name: clang-tidy-always-succeed
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app simple_tests/always_succeed --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+test" --wd "." --header-root simple_tests/always_succeed
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app simple_tests/always_succeed --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+test" --header-root "simple_tests/always_succeed" --wd "."
     language: system
     pass_filenames: true
     require_serial: true
@@ -64,11 +62,27 @@ repos:
 
   - id: clang-tidy-ptr-test
     name: clang-tidy-ptr-test
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app simple_tests/ptr_test --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+test" --wd "." --header-root simple_tests/ptr_test
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app simple_tests/ptr_test --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+test" --header-root "simple_tests/ptr_test" --wd "."
     language: system
     pass_filenames: true
     require_serial: true
     files: ^(simple_tests/ptr_test)/.*\.(c|cc|cpp|cxx)$
+
+  - id: clang-tidy-bike-computer
+    name: clang-tidy-bike-computer
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "debug+gpio+display+sensor" --header-root "bike_computer" --wd "." --app-config prj_static_scheduling.conf
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bike_computer)/(?!tests/).*\.(c|cc|cpp|cxx)$
+
+  - id: clang-tidy-bike-computer-speedometer
+    name: clang-tidy-bike-computer-speedometer
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/speedometer --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test" --header-root "bike_computer" --wd "."
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bike_computer/tests/speedometer)/.*\.(c|cc|cpp|cxx)$
 
   - id: clang-tidy-bike-computer-sensor-device
     name: clang-tidy-bike-computer-sensor-device
@@ -78,72 +92,34 @@ repos:
     require_serial: true
     files: ^(bike_computer/tests/sensor_device)/.*\.(c|cc|cpp|cxx)$
 
-  - id: clang-tidy-bike-computer-speedometer
-    name: clang-tidy-bike-computer-speedometer
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/speedometer --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+sensor+test" --header-root "bike_computer" --wd "."
+  - id: clang-tidy-bike-computer-bike-system-part1
+    name: clang-tidy-bike-computer-bike-system-part1
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part1 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test" --header-root "bike_computer" --wd "." --app-config ../../prj_static_scheduling.conf
     language: system
     pass_filenames: true
     require_serial: true
-    files: ^(bike_computer/tests/speedometer)/.*\.(c|cc|cpp|cxx)$
+    files: ^(bike_computer/tests/bike_system_part1)/.*\.(c|cc|cpp|cxx)$
 
-  - id: clang-tidy-bike-computer
-    name: clang-tidy-bike-computer
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor" --app-config prj_static_scheduling.conf --header-root "bike_computer" --wd "."
-    language: system
-    pass_filenames: false
-    require_serial: true
-    files: ^bike_computer/src/.*\.(c|cc|cpp|cxx|h|hpp|hxx)$
-
-  # Uncomment when the bike_computer speedometer test is developed.
-  # - id: clang-tidy-bike-computer-speedometer
-  #   name: clang-tidy-bike-computer-speedometer
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/speedometer --configs "log+debug+gpio+display+sensor+test+phase_a+phase_b+phase_c" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(bike_computer/tests/speedometer)/.*\.(c|cc|cpp|cxx)$
-
-  # Uncomment when the bike_computer sensor_device test is developed.
-  # - id: clang-tidy-bike-computer-sensor-device
-  #   name: clang-tidy-bike-computer-sensor-device
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/sensor_device --configs "log+debug+gpio+display+sensor+test+phase_a" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(bike_computer/tests/sensor_device)/.*\.(c|cc|cpp|cxx)$
-
-  # Uncomment when bike_system_part1 is developed.
-  - id: clang-tidy-bike-computer-bike-system-part1
-    name: clang-tidy-bike-computer-bike-system-part1
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part1 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test" --app-config ../../prj_static_scheduling.conf --header-root "bike_computer" --wd "."
-    language: system
-    pass_filenames: false
-    require_serial: true
-    files: ^bike_computer/tests/bike_system_part1/.*\.(c|cc|cpp|cxx|h|hpp|hxx)$
-
-  # Uncomment when bike_system_part2 is developed.
   - id: clang-tidy-bike-computer-bike-system-part2
     name: clang-tidy-bike-computer-bike-system-part2
-    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part2 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test+phase_b" --app-config ../../prj_static_scheduling_with_event.conf --header-root "bike_computer" --wd "."
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part2 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+test" --header-root "bike_computer" --wd "." --app-config ../../prj_static_scheduling_with_event.conf
     language: system
     pass_filenames: true
     require_serial: true
     files: ^(bike_computer/tests/bike_system_part2)/.*\.(c|cc|cpp|cxx)$
 
-  # Uncomment when bike_system_part3 is developed.
-  # - id: clang-tidy-bike-computer-bike-system-part3
-  #   name: clang-tidy-bike-computer-bike-system-part3
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part3 --configs "log+debug+gpio+display+sensor+button_emul+test+phase_c" --wd "."
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(bike_computer/tests/bike_system_part3)/.*\.(c|cc|cpp|cxx)$
+#  - id: clang-tidy-bike-computer-bike-system-part3
+#    name: clang-tidy-bike-computer-bike-system-part3
+#    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part3 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+button_emul+test" --header-root "bike_computer" --wd "." --app-config ../../prj_static_scheduling_with_wq.conf
+#    language: system
+#    pass_filenames: true
+#    require_serial: true
+#    files: ^(bike_computer/tests/bike_system_part3)/.*\.(c|cc|cpp|cxx)$
 
-  # Uncomment when the multi_tasking application is developed.
-  # - id: clang-tidy-multi-tasking
-  #   name: clang-tidy-multi-tasking
-  #   entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app multi_tasking --configs "log+debug+stats+gpio" --wd "." --app-config prj_multi_tasking.conf
-  #   language: system
-  #   pass_filenames: true
-  #   require_serial: true
-  #   files: ^(multi_tasking)/.*\.(c|cc|cpp|cxx)$
+#  - id: clang-tidy-multi-tasking
+#    name: clang-tidy-multi-tasking
+#    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app multi_tasking --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+stats+gpio" --header-root "multi_tasking" --wd "." --app-config prj_multi_tasking.conf
+#    language: system
+#    pass_filenames: true
+#    require_serial: true
+#    files: ^(multi_tasking)/.*\.(c|cc|cpp|cxx)$
