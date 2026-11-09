@@ -634,3 +634,120 @@ This phase demonstrated the evolution of a Time-Triggered Cyclic Executive (TTCE
 
 **Final Takeaway:** 
 The event-driven approach successfully resolves the issue of missed button presses and minimizes unnecessary CPU activity. However, the inevitable crash at 51.5 seconds demonstrates that improving task efficiency is not enough. To build a robust embedded system, we must abandon the rigid TTCE model and transition to a preemptive RTOS scheduler that dynamically manages tasks and provides the necessary slack time to absorb execution overhead.
+
+## Phase C - Multitasking
+
+### Question 1 - Using a mutex in an ISR and Deferring Work
+
+#### 1.1 Mutex access from an ISR with assertions enabled
+
+With the first configuration, when Button 1 is pressed, the interrupt triggers the registered callback, which calls `do_processing_with_cs()` inside the ISR context. This function is normally called by `ButtonThread` inside `perform_work()`, in thread context, where it acquires a mutex to protect the critical section.
+
+When the button is pressed while the thread is executing, the ISR interrupts it and attempts to acquire the same mutex. At the kernel level, when a thread acquires a mutex, Zephyr checks whether it is available and assigns ownership to the calling thread. If the mutex is already locked, the kernel would normally suspend the calling thread and place it in the mutex's pending queue until the mutex becomes available.
+
+However, an ISR cannot be suspended or blocked in this way. Furthermore, the interrupted thread cannot resume execution until the ISR has completed. This could create a deadlock situation, which is why Zephyr prohibits mutex operations inside ISRs.
+
+The kernel checks whether the processor is executing in interrupt context using `arch_is_in_isr()`. Since the assertion `!arch_is_in_isr()` fails, Zephyr triggers a kernel panic and halts the system, producing the mutex assertion error:
+
+![Mutex assertion in ISR](images/mutex_assertion_in_isr.png)
+
+#### 1.2 Mutex access from an ISR with assertions disabled and busy waiting
+
+In this second configuration, when Button 1 is pressed, no assertion failure is detected and the application continues to run because assertions are disabled in this build. Therefore, the previous ISR-context check is not executed when locking the mutex.
+
+If the button is pressed while the mutex is unlocked, `do_processing_with_cs()` acquires the mutex successfully. However, if the mutex is already acquired, the same mutex is acquired recursively, as shown in the output:
+
+![Recursive mutex acquisition](images/recursive_mutex_acquisition.png)
+
+From Zephyr's point of view, both the ISR and `perform_work()` execute with the same thread identity. Therefore, the kernel considers this operation a recursive lock by the existing mutex owner. We can see two occurrences of `Thread 0x200001a8 is trying to lock mutex 0x20004480`. Zephyr supports recursive mutex acquisition, and for this reason, the lock count increases from 1 to 2 instead of blocking.
+
+When the ISR finishes, it unlocks the mutex, decreasing the count to 1. The original thread still owns the mutex and eventually releases it, decreasing the count to 0. This explains why the application does not crash.
+
+However, this behavior is still not correct or safe because the assertion is simply not enabled in this build, so the kernel does not detect and reject the invalid ISR operation. If the ISR interrupted a different thread that owned the mutex, it could attempt to wait for that thread to release it. Since the interrupted thread cannot resume until the ISR finishes, this could result in a deadlock.
+
+#### 1.3 Button press while the thread sleeps outside the critical section
+
+With `CONFIG_WORK_ON_BUTTON_SLEEP=y`, `ButtonThread` enters the sleeping state after finishing its processing outside the critical section. This causes the scheduler to select the idle thread (`0x20000358`) to run.
+
+For this reason, when Button 1 is pressed, we see that the mutex acquisition is attributed to the idle thread: `Thread 0x20000358 is trying to lock mutex 0x20004480`. This happens because the ISR executes in the context of the currently scheduled thread, which is the idle thread.
+
+Since `ButtonThread` has already released the mutex before sleeping, the ISR can acquire the mutex without conflict. The application therefore continues to run without crashing, as shown in the output:
+
+![Mutex acquisition while ButtonThread sleeps outside the CS](images/mutex_acquisition_while_thread_sleeps.png)
+
+As before, assertions are disabled, so no assertion failure is detected. However, using mutexes inside an ISR is still unsafe and not supported by Zephyr.
+
+#### 1.4 Button press while the thread sleeps inside the critical section
+
+If Button 1 is pressed while `ButtonThread` is sleeping inside the critical section, the system enters a deadlock, as shown in the output:
+
+![Deadlock](images/deadlock_mutex_owned_by_sleeping_thread.png)
+
+`ButtonThread` has acquired the mutex and is currently sleeping. The scheduler therefore selects the idle thread. Unlike the previous experiment, the mutex has not been released because `ButtonThread` is sleeping inside the critical section. This means that `ButtonThread` is still the mutex owner.
+
+When the button is pressed, the ISR interrupts the idle thread and attempts to acquire the same mutex. At the kernel level, Zephyr detects that the mutex is already owned and attempts to acquire it. Normally, the calling thread would be suspended and placed in the mutex's pending queue until the mutex becomes available. However, the ISR cannot block. The acquisition therefore times out and fails, as shown by the error `Cannot lock mutex: -11`.
+
+Since assertions are disabled, the application continues executing the critical-section function even though the mutex was not successfully acquired. The subsequent attempt to unlock it also fails, producing `Cannot unlock mutex: -1`, because the idle thread is not the mutex owner.
+
+The critical event occurs when `ButtonThread` eventually wakes up and releases the mutex. We can see that the kernel reports the idle thread (`0x20000358`) as the new mutex owner, even though the ISR's acquisition attempt had already failed. This leaves the mutex owned by the idle thread.
+
+When `ButtonThread` subsequently tries to acquire the mutex again, it cannot proceed because the idle thread is still its owner. As a result, `ButtonThread` remains blocked and the application stops making progress, resulting in a deadlock.
+
+If Button 1 is pressed again after the deadlock, the ISR can still execute in the context of the idle thread. Since the idle thread is now considered the mutex owner, the recursive acquisition succeeds and the lock count increases to 2, as shown in the second output:
+
+![Recursive lock after deadlock](images/recursive_lock_after_deadlock.png)
+
+This demonstrates how using mutexes inside an ISR can disrupt the expected synchronization behavior and lead to a deadlock.
+
+#### 1.5 Deferring the work using a work queue
+
+With `CONFIG_WORK_ON_BUTTON_USE_WORK_QUEUE=y`, the application works correctly, whether the button is pressed while `ButtonThread` is inside or outside the critical section, as shown in the output: 
+
+![Work queue thread and mutex synchronization](images/work_queue_mutex_synchronization.png)
+
+The GPIO callback no longer calls `do_processing_with_cs()` directly. Instead, it submits the work to `ProcessingWorkQueue`. The work queue thread then executes the function in normal thread context, where using a mutex is allowed.
+
+`ProcessingWorkQueue` acquires the mutex when it is available. If `ButtonThread` already owns it, the work queue thread waits until the mutex is released. Once the mutex is unlocked, ownership is transferred to the waiting thread.
+
+Therefore, the work queue safely defers the processing from interrupt context to thread context. This avoids blocking or using a mutex inside the ISR and allows the two threads to synchronize correctly.
+
+### Question 2 - Using a mutex in an ISR and Deferring Work
+
+The following table summarizes the measured interrupt response times for the six scenarios.
+
+| Scenario | Thread priority | Sleep | Measured response time |
+|---|---:|---|---|
+| 1 | 8 | Yes | 30–62 µs |
+| 2 | 9 | Yes | 30–62 µs |
+| 3 | 10 | Yes | 30–62 µs |
+| 4 | 9 | No | 672 µs–17.6 ms |
+| 5 | 8 | No | Approximately 61 µs |
+| 6 | 10 | No | No response observed |
+
+#### Scenarios 1, 2 and 3:
+
+When `CONFIG_WAIT_ON_BUTTON_SLEEP` is enabled, the main thread calls `Thread::join()` and waits for the `WaitOnButton` thread to terminate. Since this thread contains an infinite loop, it never terminates, and the main thread remains blocked.
+
+Consequently, the `WaitOnButton` thread does not compete with the main thread for CPU time. Changing its priority between 8, 9 and 10 therefore has no significant impact on the measured response time, which remains between approximately 30 and 62 µs. The small variations are due to interrupt handling and scheduling overhead.
+
+#### Scenario 4:
+
+When `CONFIG_WAIT_ON_BUTTON_SLEEP` is disabled, the main thread executes an infinite busy-wait loop instead of blocking. Both the main thread and the `WaitOnButton` thread have priority 9.
+
+Since both threads have the same priority, they share CPU time through the scheduler's time-slicing mechanism. In our configuration, the time slice is 20 ms. This means that the `WaitOnButton` thread might have to wait until the next time slice to get CPU time and process the button event.
+
+Therefore, depending on when the button is pressed, the expected response time can range from almost 0 ms (if the `WaitOnButton` thread is about to run) to almost 20 ms (if it has just finished its time slice). This explains the large variations in the measured response times, which range from approximately 672 µs to 17.6 ms.
+
+#### Scenario 5:
+
+The `WaitOnButton` thread has priority 8, while the main thread has priority 9. In Zephyr, lower numerical priority values represent higher scheduling priorities. Therefore, the `WaitOnButton` thread has a higher priority and can interrupt the main thread when the button event occurs.
+
+As a result, the event is processed almost immediately, and the response time returns to approximately 61 µs.
+
+#### Scenario 6:
+
+The `WaitOnButton` thread has priority 10, while the main thread has priority 9. The main thread therefore has a higher priority and keeps the CPU occupied through its infinite busy-wait loop.
+
+Since the main thread never blocks or yields, the lower-priority `WaitOnButton` thread never gets CPU time to process the button event. Although the interrupt is still handled and the event is signaled, no response time is printed because the waiting thread never executes.
+
+This behavior is an example of **thread starvation**.
