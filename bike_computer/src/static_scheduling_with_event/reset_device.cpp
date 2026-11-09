@@ -30,7 +30,7 @@
 namespace bike_computer::static_scheduling_with_event {
 
 ResetDevice::ResetDevice()
-    : _button1(zpp_lib::InterruptIn::PinName::BUTTON1), _button1_token(_button1.add_callback([this]() { on_fall_button1(); })) {}
+    : _button1(zpp_lib::InterruptIn::PinName::BUTTON1), _button1_token(_button1.add_callback([this]() { this->on_fall_button1(); })) {}
 
 bool ResetDevice::check_reset() {
   // Load flag with acquire to sync with ISR state write
