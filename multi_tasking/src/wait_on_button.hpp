@@ -1,0 +1,61 @@
+// Copyright 2025 Haute école d'ingénierie et d'architecture de Fribourg
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/****************************************************************************
+ * @file wait_on_button.hpp
+ * @author Serge Ayer <serge.ayer@hefr.ch>
+ *
+ * @brief Declaration of the WaitOnButton class
+ *
+ * @date 2025-07-01
+ * @version 1.0.0
+ ***************************************************************************/
+
+#pragma once
+
+// stl
+#include <chrono>
+
+// zpp_lib
+#include "zpp_include/event.hpp"
+#include "zpp_include/interrupt_in.hpp"
+#include "zpp_include/thread.hpp"
+
+namespace multi_tasking {
+
+class WaitOnButton {
+public:
+  explicit WaitOnButton(const char* threadName);
+
+  [[nodiscard]] zpp_lib::ZephyrResult start();
+  void wait_started();
+  void wait_exit();
+
+private:
+  void wait_for_button_event();
+  void on_button_pressed();
+
+  static constexpr uint8_t kPressedEvent = BIT(0);
+  static constexpr uint8_t kStartedEvent = BIT(1);
+
+  zpp_lib::Thread _thread;
+  static constexpr zpp_lib::PreemptableThreadPriority kThreadPriority =
+      zpp_lib::prio_to_preemptable_thread_priority(CONFIG_WAIT_ON_BUTTON_THREAD_PRIORITY);
+  std::chrono::microseconds _pressed_time;
+  zpp_lib::Event _event;
+  zpp_lib::InterruptIn _push_button{zpp_lib::InterruptIn::PinName::BUTTON1};
+  zpp_lib::RegistrationToken _push_button_token;
+};
+
+}  // namespace multi_tasking

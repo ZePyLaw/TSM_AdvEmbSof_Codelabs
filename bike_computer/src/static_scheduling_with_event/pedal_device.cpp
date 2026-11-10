@@ -28,8 +28,8 @@ namespace bike_computer::static_scheduling_with_event {
 
 PedalDevice::PedalDevice()
     : _button2(zpp_lib::InterruptIn::PinName::BUTTON2), _button3(zpp_lib::InterruptIn::PinName::BUTTON3),
-      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { on_fall_button3(); })),
-      _button4_token(_button4.add_callback([this]() { on_fall_button4(); })) {}
+      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { this->on_fall_button3(); })),
+      _button4_token(_button4.add_callback([this]() { this->on_fall_button4(); })) {}
 
 std::chrono::milliseconds PedalDevice::get_current_rotation_time() {
   // Consume events captured by the interrupt callbacks.

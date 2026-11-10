@@ -29,8 +29,8 @@ namespace bike_computer::static_scheduling_with_event {
 
 GearDevice::GearDevice()
     : _button2(zpp_lib::InterruptIn::PinName::BUTTON2), _button3(zpp_lib::InterruptIn::PinName::BUTTON3),
-      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { on_fall_button3(); })),
-      _button4_token(_button4.add_callback([this]() { on_fall_button4(); })) {}
+      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { this->on_fall_button3(); })),
+      _button4_token(_button4.add_callback([this]() { this->on_fall_button4(); })) {}
 
 uint8_t GearDevice::get_current_gear() {
   // Consume events captured by the interrupt callbacks.
