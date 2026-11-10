@@ -711,7 +711,7 @@ The GPIO callback no longer calls `do_processing_with_cs()` directly. Instead, i
 
 Therefore, the work queue safely defers the processing from interrupt context to thread context. This avoids blocking or using a mutex inside the ISR and allows the two threads to synchronize correctly.
 
-### Question 2 - Using a mutex in an ISR and Deferring Work
+### Question 2 - Analyzing Interrupt Response Time and Evaluating Thread Priorities
 
 The following table summarizes the measured interrupt response times for the six scenarios.
 
