@@ -51,7 +51,7 @@ void WaitOnButton::wait_started() {
   _event.wait_any(kStartedEvent);
 }
 
-void WaitOnButton::wait_exit() {  
+void WaitOnButton::wait_exit() {
   auto res = _thread.join();
   if (!res) {
     ZPP_LOG_ERR("join() failed: %d", static_cast<int>(res.error()));
