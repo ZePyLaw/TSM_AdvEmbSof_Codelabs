@@ -12,6 +12,14 @@
   - Alexandre Schmid
   - Jean Vallet
 
+## Project assessment
+
+- Phase A: 19.5pts / 20pts
+- Phase B:
+- Phase C:
+- Phase D:
+- Total:  / 100 pts
+  
 ## Project description
 
 This repository contains the work for the Advanced Embedded Software course project based on Zephyr RTOS.
