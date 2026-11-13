@@ -45,6 +45,8 @@ ZPP_LOG_MODULE_DECLARE(bike_computer, CONFIG_APP_LOG_LEVEL);
 
 namespace bike_computer::static_scheduling_with_wq {
 
+BikeSystem::BikeSystem() : _reset_device([this]() { this->on_reset(); }) {}
+
 // Define the destructor declared in bike_system.hpp.
 // The compiler handles the destruction of all member objects.
 BikeSystem::~BikeSystem() = default;
@@ -78,10 +80,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
   if (!res) {
     return res;
   }
-  res = _ttce.add_task(0, [this]() { this->reset_task(); });
-  if (!res) {
-    return res;
-  }
 
   // minor cycle 1
   res = _ttce.add_task(1, [this]() { this->speed_distance_task(); });
@@ -99,10 +97,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
     return res;
   }
   res = _ttce.add_task(2, [this]() { this->gear_task(); });
-  if (!res) {
-    return res;
-  }
-  res = _ttce.add_task(2, [this]() { this->reset_task(); });
   if (!res) {
     return res;
   }
@@ -158,6 +152,14 @@ zpp_lib::ZephyrResult BikeSystem::initialize() {
   return {};
 }
 
+void BikeSystem::on_reset() {
+  // defer the reset work to the work queue
+  auto res = _isr_work_queue.call(_reset_work);
+  if (!res) {
+    ZPP_LOG_ERR("Cannot call work in on_reset: %d", static_cast<int>(res.error()));
+  }
+}
+
 void BikeSystem::gear_task() {
   // gear task
   _task_manager.register_task_start(TaskManager::TaskType::GearTaskType);
@@ -199,13 +201,11 @@ void BikeSystem::temperature_task() {
 void BikeSystem::reset_task() {
   _task_manager.register_task_start(TaskManager::TaskType::ResetTaskType);
 
-  if (_reset_device.check_reset()) {
 #if CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
-    std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _reset_device.get_press_time();
-    ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
+  std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _reset_device.get_press_time();
+  ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 #endif  // CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
-    _speedometer.reset();
-  }
+  _speedometer.reset();
 
   _task_manager.simulate_computation_time(TaskManager::TaskType::ResetTaskType, kAllowSleep);
 }

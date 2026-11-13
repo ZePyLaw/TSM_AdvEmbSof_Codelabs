@@ -29,18 +29,9 @@
 
 namespace bike_computer::static_scheduling_with_wq {
 
-ResetDevice::ResetDevice()
-    : _button1(zpp_lib::InterruptIn::PinName::BUTTON1), _button1_token(_button1.add_callback([this]() { this->on_fall_button1(); })) {}
-
-bool ResetDevice::check_reset() {
-  // Load flag with acquire to sync with ISR state write
-  if (_button1_state.load(std::memory_order_acquire)) {
-    // Clear flag with relaxed order (atomic write, no ordering constraints)
-    _button1_state.store(false, std::memory_order_release);
-    return true;
-  }
-  return false;
-}
+ResetDevice::ResetDevice(CallbackFunction callback)
+    : _reset_callback(std::move(callback)), _button1(zpp_lib::InterruptIn::PinName::BUTTON1),
+      _button1_token(_button1.add_callback([this]() { this->on_fall_button1(); })) {}
 
 std::chrono::microseconds ResetDevice::get_press_time() {
   return _press_time;
@@ -51,8 +42,8 @@ void ResetDevice::on_fall_button1() {
   // Do not trigger the reset here, BikeSystem handles it periodically.
   _press_time = zpp_lib::Time::get_uptime();
 
-  // Set flag with release to safely publish the state change
-  _button1_state.store(true, std::memory_order_release);
+  // Signal the BikeSystem that the reset button was pressed using the registered callback
+  _reset_callback();
 }
 
 }  // namespace bike_computer::static_scheduling_with_wq

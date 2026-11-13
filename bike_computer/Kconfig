@@ -32,3 +32,10 @@ config BIKE_COMPUTER_STATIC_SCHEDULING_WITH_WQ
   help
     This option must be enabled to use the static scheduling version
     with work queue
+
+config WORK_QUEUE_THREAD_PRIORITY
+  int "Priority of the thread running the work queue"
+  default 9
+  help
+    This option sets the priority of the thread running the
+    work queue (with BIKE_COMPUTER_STATIC_SCHEDULING_WITH_WQ enabled)

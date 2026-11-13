@@ -40,3 +40,11 @@ target_sources_ifdef(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT app PRIVA
     src/static_scheduling_with_event/reset_device.cpp
     src/static_scheduling_with_event/bike_system.cpp
 )
+
+# Part 3: Static scheduling with work queue (TTCE, Events, WorkQueue)
+target_sources_ifdef(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_WQ app PRIVATE
+    src/static_scheduling_with_wq/gear_device.cpp
+    src/static_scheduling_with_wq/pedal_device.cpp
+    src/static_scheduling_with_wq/reset_device.cpp
+    src/static_scheduling_with_wq/bike_system.cpp
+)

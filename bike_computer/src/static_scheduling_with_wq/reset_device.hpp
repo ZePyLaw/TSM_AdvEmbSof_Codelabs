@@ -39,13 +39,13 @@ static_assert(std::atomic<bool>::is_always_lock_free, "Atomic bool must be lock-
 
 namespace bike_computer::static_scheduling_with_wq {
 
+// Define the reset callback function type
+using CallbackFunction = std::function<void()>;
+
 // Polls the reset button, while an interrupt records the press timestamp.
 class ResetDevice : private zpp_lib::NonCopyable {
 public:
-  ResetDevice();
-
-  // In Part I, the reset is handled only while button 1 is still pressed.
-  bool check_reset();
+  ResetDevice(CallbackFunction callback);
 
   // Timestamp captured by the GPIO callback (used for response-time logging).
   std::chrono::microseconds get_press_time();
@@ -54,11 +54,11 @@ private:
   // Called by zpp_lib when the button interrupt occurs (ISR context).
   void on_fall_button1();
 
+  // Reset callback
+  CallbackFunction _reset_callback;
+
   // Hardware input used to detect button presses.
   zpp_lib::InterruptIn _button1;
-
-  // Button state flag
-  std::atomic<bool> _button1_state{false};
 
   // RAII token unregisters the callback when the object is destroyed.
   zpp_lib::RegistrationToken _button1_token;

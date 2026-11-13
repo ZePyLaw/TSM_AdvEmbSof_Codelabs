@@ -35,6 +35,7 @@
 
 // zpp_lib
 #include "zpp_include/display.hpp"
+#include "zpp_include/work_queue.hpp"
 
 // from common
 #include "common/bike_display.hpp"
@@ -48,7 +49,7 @@ namespace bike_computer::static_scheduling_with_wq {
 class BikeSystem {
 public:
   // constructor
-  BikeSystem() = default;
+  BikeSystem();
 
   // destructor
   ~BikeSystem();
@@ -77,6 +78,7 @@ private:
   void reset_task();
   void display_task1();
   void display_task2();
+  void on_reset();
 
   // flag stating whether sleep is allowed when simulating computation times
   static constexpr bool kAllowSleep = true;
@@ -109,6 +111,11 @@ private:
   static constexpr uint16_t kNbrOfMinorCycles            = 4;
   static constexpr uint16_t kMaxNbrOfTasksInMinorCycles  = 5;  // 3 tasks max + 1 cpu log + 1 margin
   static constexpr std::chrono::milliseconds kMinorCycle = 400ms;
+
+  // define a work queue to serve the ISRs
+  zpp_lib::WorkQueue _isr_work_queue{"ISRWorkQueue", zpp_lib::prio_to_preemptable_thread_priority(CONFIG_WORK_QUEUE_THREAD_PRIORITY)};
+  // define a work attribute for the reset
+  zpp_lib::Work<BikeSystem> _reset_work{zpp_lib::Work<BikeSystem>(this, &BikeSystem::reset_task)};
 
   // instance of the TTCE engine
   TTCE<VoidFunction, kNbrOfMinorCycles, kMaxNbrOfTasksInMinorCycles> _ttce{kMinorCycle};
