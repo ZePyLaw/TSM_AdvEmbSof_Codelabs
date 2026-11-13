@@ -36,6 +36,9 @@
 
 #elif defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_EVENT)
 #include "static_scheduling_with_event/bike_system.hpp"
+
+#elif defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_WQ)
+#include "static_scheduling_with_wq/bike_system.hpp"
 #endif
 
 ZPP_LOG_MODULE_REGISTER(bike_computer, CONFIG_APP_LOG_LEVEL);
@@ -60,6 +63,15 @@ int main() {
   auto result = bike_system.start();
   if (!result) {
     ZPP_LOG_ERR("BikeSystem with events failed: %d", static_cast<int>(result.error()));
+    return -1;
+  }
+#elif defined(CONFIG_BIKE_COMPUTER_STATIC_SCHEDULING_WITH_WQ)
+  // Start the BikeComputer static scheduler with work queue.
+  bike_computer::static_scheduling_with_wq::BikeSystem bike_system;
+
+  auto result = bike_system.start();
+  if (!result) {
+    ZPP_LOG_ERR("BikeSystem with work queue failed: %d", static_cast<int>(result.error()));
     return -1;
   }
 #else
