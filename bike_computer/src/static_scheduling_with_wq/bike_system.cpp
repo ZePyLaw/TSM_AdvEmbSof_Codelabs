@@ -184,7 +184,7 @@ void BikeSystem::gear_task(uint8_t current_gear, uint8_t current_gear_size) {
 }
 
 void BikeSystem::speed_distance_task(std::chrono::milliseconds pedal_rotation_time) {
-  // speed and distance task
+  // Speed and Distance task
   _task_manager.register_task_start(TaskManager::TaskType::SpeedTaskType);
 
   // Update the component that need pedal_rotation_time
@@ -194,6 +194,7 @@ void BikeSystem::speed_distance_task(std::chrono::milliseconds pedal_rotation_ti
 }
 
 void BikeSystem::temperature_task() {
+  // Temperature task
   _task_manager.register_task_start(TaskManager::TaskType::TemperatureTaskType);
 
   // no need to protect access to data members (single threaded)
@@ -207,11 +208,16 @@ void BikeSystem::temperature_task() {
 }
 
 void BikeSystem::reset_task() {
+  // Reset task
+  _task_manager.register_task_start(TaskManager::TaskType::ResetTaskType);
+  
 #if CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
   std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _reset_device.get_press_time();
   ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 #endif  // CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
   _speedometer.reset();
+
+  _task_manager.simulate_computation_time(TaskManager::TaskType::ResetTaskType, kAllowSleep);
 }
 
 void BikeSystem::display_task1() {
