@@ -48,11 +48,13 @@ namespace bike_computer::static_scheduling_with_wq {
 BikeSystem::BikeSystem()
     : _isr_work_queue("ISRWorkQueue", zpp_lib::prio_to_preemptable_thread_priority(CONFIG_WORK_QUEUE_THREAD_PRIORITY)),
       _reset_work(zpp_lib::Work<BikeSystem>(this, &BikeSystem::reset_task)),
-      _gear_work(zpp_lib::Work<BikeSystem, uint8_t, uint8_t>(this, &BikeSystem::update_gear, 0, 0)),
+      _gear_work(zpp_lib::Work<BikeSystem, uint8_t, uint8_t>(
+          this, &BikeSystem::gear_task, GearDevice::kInitialGear, GearDevice::kInitialGearSize)),
+      _pedal_work(
+          zpp_lib::Work<BikeSystem, std::chrono::milliseconds>(this, &BikeSystem::speed_distance_task, PedalDevice::kInitialRotationTime)),
       _reset_device([this]() { this->on_reset(); }),
-      _gear_device([this](uint8_t current_gear, uint8_t current_gear_size) {
-        this->on_gear_changed(current_gear, current_gear_size);
-      }) {}
+      _gear_device([this](uint8_t current_gear, uint8_t current_gear_size) { this->on_gear_changed(current_gear, current_gear_size); }),
+      _pedal_device([this](std::chrono::milliseconds pedal_rotation_time) { this->on_pedal_rotation_time_changed(pedal_rotation_time); }) {}
 
 // Define the destructor declared in bike_system.hpp.
 // The compiler handles the destruction of all member objects.
@@ -79,32 +81,16 @@ zpp_lib::ZephyrResult BikeSystem::start() {
   zpp_lib::ZephyrResult res;
 
   // minor cycle 0
-  res = _ttce.add_task(0, [this]() { this->speed_distance_task(); });
-  if (!res) {
-    return res;
-  }
 
   // minor cycle 1
-  res = _ttce.add_task(1, [this]() { this->speed_distance_task(); });
-  if (!res) {
-    return res;
-  }
   res = _ttce.add_task(1, [this]() { this->display_task1(); });
   if (!res) {
     return res;
   }
 
   // minor cycle 2
-  res = _ttce.add_task(2, [this]() { this->speed_distance_task(); });
-  if (!res) {
-    return res;
-  }
 
   // minor cycle 3
-  res = _ttce.add_task(3, [this]() { this->speed_distance_task(); });
-  if (!res) {
-    return res;
-  }
   res = _ttce.add_task(3, [this]() { this->display_task2(); });
   if (!res) {
     return res;
@@ -142,9 +128,10 @@ zpp_lib::ZephyrResult BikeSystem::initialize() {
     return res;
   }
 
-  // Initialize the gear and gear size on the display
+  // Initialize GearDevice and PedalDevice state
   _bike_display.display_gear(GearDevice::kInitialGear);
   _speedometer.set_gear_size(GearDevice::kInitialGearSize);
+  _speedometer.set_current_pedal_rotation_time(PedalDevice::kInitialRotationTime);
 
   // Initialize the sensor device
   res = _sensor_device.initialize();
@@ -174,21 +161,34 @@ void BikeSystem::on_gear_changed(uint8_t current_gear, uint8_t current_gear_size
   }
 }
 
-void update_gear(uint8_t current_gear, uint8_t current_gear_size) {
+void BikeSystem::on_pedal_rotation_time_changed(std::chrono::milliseconds pedal_rotation_time) {
+  // Update the pedal work parameter
+  _pedal_work.set_params(pedal_rotation_time);
+
+  // Defer the pedal work to the work queue
+  auto res = _isr_work_queue.call(_pedal_work);
+  if (!res) {
+    ZPP_LOG_ERR("Cannot call work in on_pedal_rotation_time_changed: %d", static_cast<int>(res.error()));
+  }
+}
+
+void BikeSystem::gear_task(uint8_t current_gear, uint8_t current_gear_size) {
+  // gear task
+  _task_manager.register_task_start(TaskManager::TaskType::GearTaskType);
+
   // Update the components that needs current_gear and current_gear_size
   _bike_display.display_gear(current_gear);
   _speedometer.set_gear_size(current_gear_size);
+
+  _task_manager.simulate_computation_time(TaskManager::TaskType::GearTaskType, kAllowSleep);
 }
 
-void BikeSystem::speed_distance_task() {
+void BikeSystem::speed_distance_task(std::chrono::milliseconds pedal_rotation_time) {
   // speed and distance task
   _task_manager.register_task_start(TaskManager::TaskType::SpeedTaskType);
 
-  auto pedal_rotation_time = _pedal_device.get_current_rotation_time();
+  // Update the component that need pedal_rotation_time
   _speedometer.set_current_pedal_rotation_time(pedal_rotation_time);
-  // no need to protect access to data members (single threaded)
-  _current_speed     = _speedometer.get_current_speed();
-  _traveled_distance = _speedometer.get_traveled_distance();
 
   _task_manager.simulate_computation_time(TaskManager::TaskType::SpeedTaskType, kAllowSleep);
 }
@@ -217,8 +217,8 @@ void BikeSystem::reset_task() {
 void BikeSystem::display_task1() {
   _task_manager.register_task_start(TaskManager::TaskType::DisplayTask1Type);
 
-  _bike_display.display_speed(_current_speed);
-  _bike_display.display_distance(_traveled_distance);
+  _bike_display.display_speed(_speedometer.get_current_speed());
+  _bike_display.display_distance(_speedometer.get_traveled_distance());
 
   _task_manager.simulate_computation_time(TaskManager::TaskType::DisplayTask1Type, kAllowSleep);
 }

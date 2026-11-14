@@ -45,11 +45,13 @@ namespace bike_computer::static_scheduling_with_wq {
 // Button 2 must NOT be held: otherwise the buttons control the gear.
 class PedalDevice : private zpp_lib::NonCopyable {
 public:
-  PedalDevice();
+  // Define the reset callback function type
+  using CallbackFunction = std::function<void(std::chrono::milliseconds)>;
 
-  // Poll buttons and return the duration of one complete pedal rotation.
-  // A smaller duration means a higher pedaling speed.
-  std::chrono::milliseconds get_current_rotation_time();
+  // PedalDevice initial state
+  static constexpr std::chrono::milliseconds kInitialRotationTime = bike_computer::kInitialPedalRotationTime;
+
+  PedalDevice(CallbackFunction callback);
 
 private:
   // Speed increases when rotation time decreases, and vice versa.
@@ -60,6 +62,8 @@ private:
   void on_fall_button3();
   void on_fall_button4();
 
+  CallbackFunction _pedal_callback;
+
   // Initial cadence is configured in the common constants.
   std::chrono::milliseconds _pedal_rotation_time = bike_computer::kInitialPedalRotationTime;
 
@@ -67,10 +71,6 @@ private:
   zpp_lib::InterruptIn _button2;
   zpp_lib::InterruptIn _button3;
   zpp_lib::InterruptIn _button4;
-
-  // Button state flags
-  std::atomic<bool> _button3_state{false};
-  std::atomic<bool> _button4_state{false};
 
   // RAII token unregisters the callback when the object is destroyed.
   zpp_lib::RegistrationToken _button3_token;

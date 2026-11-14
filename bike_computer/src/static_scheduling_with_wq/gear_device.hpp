@@ -45,10 +45,10 @@ namespace bike_computer::static_scheduling_with_wq {
 class GearDevice : private zpp_lib::NonCopyable {
 public:
   // Define the reset callback function type
-  using CallbackFunction = std::function<void(uint8_t, uint_8t)>;
+  using CallbackFunction = std::function<void(uint8_t, uint8_t)>;
 
   // GearDevice initial state
-  static constexpr uint8_t kInitialGear = bike_computer::kMinGear;
+  static constexpr uint8_t kInitialGear     = bike_computer::kMinGear;
   static constexpr uint8_t kInitialGearSize = bike_computer::kMaxGearSize - kInitialGear;
 
   GearDevice(CallbackFunction callback);

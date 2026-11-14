@@ -79,7 +79,9 @@ private:
   void display_task2();
   void on_reset();
   void on_gear_changed(uint8_t current_gear, uint8_t current_gear_size);
-  void update_gear(uint8_t current_gear, uint8_t current_gear_size);
+  void on_pedal_rotation_time_changed(std::chrono::milliseconds pedal_rotation_time);
+  void gear_task(uint8_t current_gear, uint8_t current_gear_size);
+  void speed_distance_task(std::chrono::milliseconds pedal_rotation_time);
 
   // define a work queue to serve the ISRs
   zpp_lib::WorkQueue _isr_work_queue;
@@ -87,18 +89,17 @@ private:
   zpp_lib::Work<BikeSystem> _reset_work;
   // define a work attribute for the gear
   zpp_lib::Work<BikeSystem, uint8_t, uint8_t> _gear_work;
+  // define a work attribute for the pedal
+  zpp_lib::Work<BikeSystem, std::chrono::milliseconds> _pedal_work;
 
   // flag stating whether sleep is allowed when simulating computation times
   static constexpr bool kAllowSleep = true;
+  // data member that represents the device used for resetting
+  ResetDevice _reset_device;
   // data member that represents the device for manipulating the gear
   GearDevice _gear_device;
   // data member that represents the device for manipulating the pedal rotation
-  // speed/time
   PedalDevice _pedal_device;
-  float _current_speed     = 0.0F;
-  float _traveled_distance = 0.0F;
-  // data member that represents the device used for resetting
-  ResetDevice _reset_device;
   // data member that represents the display
   BikeDisplay _bike_display;
   // data member that represents the device for counting wheel rotations

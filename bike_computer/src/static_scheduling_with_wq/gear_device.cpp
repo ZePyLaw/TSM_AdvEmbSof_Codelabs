@@ -27,9 +27,10 @@
 
 namespace bike_computer::static_scheduling_with_wq {
 
-GearDevice::GearDevice(CallbackFunction callback) : _gear_callback(std::move(callback)),
-      _button2(zpp_lib::InterruptIn::PinName::BUTTON2), _button3(zpp_lib::InterruptIn::PinName::BUTTON3),
-      _button4(zpp_lib::InterruptIn::PinName::BUTTON4), _button3_token(_button3.add_callback([this]() { this->on_fall_button3(); })),
+GearDevice::GearDevice(CallbackFunction callback)
+    : _gear_callback(std::move(callback)), _button2(zpp_lib::InterruptIn::PinName::BUTTON2),
+      _button3(zpp_lib::InterruptIn::PinName::BUTTON3), _button4(zpp_lib::InterruptIn::PinName::BUTTON4),
+      _button3_token(_button3.add_callback([this]() { this->on_fall_button3(); })),
       _button4_token(_button4.add_callback([this]() { this->on_fall_button4(); })) {}
 
 void GearDevice::on_fall_button3() {
@@ -43,7 +44,7 @@ void GearDevice::on_fall_button3() {
     }
 
     // Signal the BikeSystem using the registered callback
-    _gear_callback(_current_gear, bike_computer::kMaxGearSize - _current_gear)
+    _gear_callback(_current_gear, bike_computer::kMaxGearSize - _current_gear);
   }
 }
 
@@ -58,7 +59,7 @@ void GearDevice::on_fall_button4() {
     }
 
     // Signal the BikeSystem using the registered callback
-    _gear_callback(_current_gear, bike_computer::kMaxGearSize - _current_gear)
+    _gear_callback(_current_gear, bike_computer::kMaxGearSize - _current_gear);
   }
 }
 
