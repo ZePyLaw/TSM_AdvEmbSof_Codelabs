@@ -39,12 +39,12 @@ static_assert(std::atomic<bool>::is_always_lock_free, "Atomic bool must be lock-
 
 namespace bike_computer::static_scheduling_with_wq {
 
-// Define the reset callback function type
-using CallbackFunction = std::function<void()>;
-
 // Polls the reset button, while an interrupt records the press timestamp.
 class ResetDevice : private zpp_lib::NonCopyable {
 public:
+  // Define the reset callback function type
+  using CallbackFunction = std::function<void()>;
+
   ResetDevice(CallbackFunction callback);
 
   // Timestamp captured by the GPIO callback (used for response-time logging).

@@ -45,7 +45,14 @@ ZPP_LOG_MODULE_DECLARE(bike_computer, CONFIG_APP_LOG_LEVEL);
 
 namespace bike_computer::static_scheduling_with_wq {
 
-BikeSystem::BikeSystem() : _reset_device([this]() { this->on_reset(); }) {}
+BikeSystem::BikeSystem()
+    : _isr_work_queue("ISRWorkQueue", zpp_lib::prio_to_preemptable_thread_priority(CONFIG_WORK_QUEUE_THREAD_PRIORITY)),
+      _reset_work(zpp_lib::Work<BikeSystem>(this, &BikeSystem::reset_task)),
+      _gear_work(zpp_lib::Work<BikeSystem, uint8_t, uint8_t>(this, &BikeSystem::update_gear, 0, 0)),
+      _reset_device([this]() { this->on_reset(); }),
+      _gear_device([this](uint8_t current_gear, uint8_t current_gear_size) {
+        this->on_gear_changed(current_gear, current_gear_size);
+      }) {}
 
 // Define the destructor declared in bike_system.hpp.
 // The compiler handles the destruction of all member objects.
@@ -76,10 +83,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
   if (!res) {
     return res;
   }
-  res = _ttce.add_task(0, [this]() { this->gear_task(); });
-  if (!res) {
-    return res;
-  }
 
   // minor cycle 1
   res = _ttce.add_task(1, [this]() { this->speed_distance_task(); });
@@ -93,10 +96,6 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 
   // minor cycle 2
   res = _ttce.add_task(2, [this]() { this->speed_distance_task(); });
-  if (!res) {
-    return res;
-  }
-  res = _ttce.add_task(2, [this]() { this->gear_task(); });
   if (!res) {
     return res;
   }
@@ -136,14 +135,18 @@ void BikeSystem::stop() {
 }
 
 zpp_lib::ZephyrResult BikeSystem::initialize() {
-  // initialize the display
+  // Iinitialize the display
   auto res = _bike_display.initialize();
   if (!res) {
     ZPP_LOG_ERR("Cannot initialize display: %d", static_cast<int>(res.error()));
     return res;
   }
 
-  // initialize the sensor device
+  // Initialize the gear and gear size on the display
+  _bike_display.display_gear(GearDevice::kInitialGear);
+  _speedometer.set_gear_size(GearDevice::kInitialGearSize);
+
+  // Initialize the sensor device
   res = _sensor_device.initialize();
   if (!res) {
     ZPP_LOG_ERR("Sensor not present or initialization failed: %d", static_cast<int>(res.error()));
@@ -153,22 +156,28 @@ zpp_lib::ZephyrResult BikeSystem::initialize() {
 }
 
 void BikeSystem::on_reset() {
-  // defer the reset work to the work queue
+  // Defer the reset work to the work queue
   auto res = _isr_work_queue.call(_reset_work);
   if (!res) {
     ZPP_LOG_ERR("Cannot call work in on_reset: %d", static_cast<int>(res.error()));
   }
 }
 
-void BikeSystem::gear_task() {
-  // gear task
-  _task_manager.register_task_start(TaskManager::TaskType::GearTaskType);
+void BikeSystem::on_gear_changed(uint8_t current_gear, uint8_t current_gear_size) {
+  // Update the gear work parameters
+  _gear_work.set_params(current_gear, current_gear_size);
 
-  // no need to protect access to data members (single threaded)
-  _current_gear      = _gear_device.get_current_gear();
-  _current_gear_size = _gear_device.get_current_gear_size();
+  // Defer the gear work to the work queue
+  auto res = _isr_work_queue.call(_gear_work);
+  if (!res) {
+    ZPP_LOG_ERR("Cannot call work in on_gear_changed: %d", static_cast<int>(res.error()));
+  }
+}
 
-  _task_manager.simulate_computation_time(TaskManager::TaskType::GearTaskType, kAllowSleep);
+void update_gear(uint8_t current_gear, uint8_t current_gear_size) {
+  // Update the components that needs current_gear and current_gear_size
+  _bike_display.display_gear(current_gear);
+  _speedometer.set_gear_size(current_gear_size);
 }
 
 void BikeSystem::speed_distance_task() {
@@ -177,7 +186,6 @@ void BikeSystem::speed_distance_task() {
 
   auto pedal_rotation_time = _pedal_device.get_current_rotation_time();
   _speedometer.set_current_pedal_rotation_time(pedal_rotation_time);
-  _speedometer.set_gear_size(_current_gear_size);
   // no need to protect access to data members (single threaded)
   _current_speed     = _speedometer.get_current_speed();
   _traveled_distance = _speedometer.get_traveled_distance();
@@ -199,21 +207,16 @@ void BikeSystem::temperature_task() {
 }
 
 void BikeSystem::reset_task() {
-  _task_manager.register_task_start(TaskManager::TaskType::ResetTaskType);
-
 #if CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
   std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _reset_device.get_press_time();
   ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 #endif  // CONFIG_APP_LOG_LEVEL >= CONFIG_LOG_LEVEL_INFO
   _speedometer.reset();
-
-  _task_manager.simulate_computation_time(TaskManager::TaskType::ResetTaskType, kAllowSleep);
 }
 
 void BikeSystem::display_task1() {
   _task_manager.register_task_start(TaskManager::TaskType::DisplayTask1Type);
 
-  _bike_display.display_gear(_current_gear);
   _bike_display.display_speed(_current_speed);
   _bike_display.display_distance(_traveled_distance);
 

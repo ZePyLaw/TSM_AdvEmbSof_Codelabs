@@ -72,20 +72,26 @@ public:
 private:
   // private methods
   [[nodiscard]] zpp_lib::ZephyrResult initialize();
-  void gear_task();
   void speed_distance_task();
   void temperature_task();
   void reset_task();
   void display_task1();
   void display_task2();
   void on_reset();
+  void on_gear_changed(uint8_t current_gear, uint8_t current_gear_size);
+  void update_gear(uint8_t current_gear, uint8_t current_gear_size);
+
+  // define a work queue to serve the ISRs
+  zpp_lib::WorkQueue _isr_work_queue;
+  // define a work attribute for the reset
+  zpp_lib::Work<BikeSystem> _reset_work;
+  // define a work attribute for the gear
+  zpp_lib::Work<BikeSystem, uint8_t, uint8_t> _gear_work;
 
   // flag stating whether sleep is allowed when simulating computation times
   static constexpr bool kAllowSleep = true;
   // data member that represents the device for manipulating the gear
   GearDevice _gear_device;
-  uint8_t _current_gear      = bike_computer::kMinGear;
-  uint8_t _current_gear_size = bike_computer::kMinGearSize;
   // data member that represents the device for manipulating the pedal rotation
   // speed/time
   PedalDevice _pedal_device;
@@ -111,11 +117,6 @@ private:
   static constexpr uint16_t kNbrOfMinorCycles            = 4;
   static constexpr uint16_t kMaxNbrOfTasksInMinorCycles  = 5;  // 3 tasks max + 1 cpu log + 1 margin
   static constexpr std::chrono::milliseconds kMinorCycle = 400ms;
-
-  // define a work queue to serve the ISRs
-  zpp_lib::WorkQueue _isr_work_queue{"ISRWorkQueue", zpp_lib::prio_to_preemptable_thread_priority(CONFIG_WORK_QUEUE_THREAD_PRIORITY)};
-  // define a work attribute for the reset
-  zpp_lib::Work<BikeSystem> _reset_work{zpp_lib::Work<BikeSystem>(this, &BikeSystem::reset_task)};
 
   // instance of the TTCE engine
   TTCE<VoidFunction, kNbrOfMinorCycles, kMaxNbrOfTasksInMinorCycles> _ttce{kMinorCycle};

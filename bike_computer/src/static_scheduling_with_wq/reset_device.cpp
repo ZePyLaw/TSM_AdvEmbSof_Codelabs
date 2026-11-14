@@ -42,7 +42,7 @@ void ResetDevice::on_fall_button1() {
   // Do not trigger the reset here, BikeSystem handles it periodically.
   _press_time = zpp_lib::Time::get_uptime();
 
-  // Signal the BikeSystem that the reset button was pressed using the registered callback
+  // Signal the BikeSystem using the registered callback
   _reset_callback();
 }
 

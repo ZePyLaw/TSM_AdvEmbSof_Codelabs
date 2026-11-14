@@ -44,32 +44,30 @@ namespace bike_computer::static_scheduling_with_wq {
 // Button 2 must be held while pressing Button 3 or Button 4.
 class GearDevice : private zpp_lib::NonCopyable {
 public:
-  GearDevice();
+  // Define the reset callback function type
+  using CallbackFunction = std::function<void(uint8_t, uint_8t)>;
 
-  // Read the buttons and update the current gear.
-  // [[nodiscard]] warns if the caller ignores the returned value.
-  [[nodiscard]] uint8_t get_current_gear();
+  // GearDevice initial state
+  static constexpr uint8_t kInitialGear = bike_computer::kMinGear;
+  static constexpr uint8_t kInitialGearSize = bike_computer::kMaxGearSize - kInitialGear;
 
-  // Return the gear size associated with the current gear.
-  // const guarantees that this method does not modify the object state.
-  [[nodiscard]] uint8_t get_current_gear_size() const;
+  GearDevice(CallbackFunction callback);
 
 private:
   // Called by zpp_lib when the buttons interrupts occurs (ISR context).
   void on_fall_button3();
   void on_fall_button4();
 
+  // GearDevice callback
+  CallbackFunction _gear_callback;
+
   // Start with the minimum gear defined in the common constants.
-  uint8_t _current_gear = bike_computer::kMinGear;
+  uint8_t _current_gear = kInitialGear;
 
   // Hardware inputs used to detect button presses.
   zpp_lib::InterruptIn _button2;
   zpp_lib::InterruptIn _button3;
   zpp_lib::InterruptIn _button4;
-
-  // Button state flags
-  std::atomic<bool> _button3_state{false};
-  std::atomic<bool> _button4_state{false};
 
   // RAII token unregisters the callback when the object is destroyed.
   zpp_lib::RegistrationToken _button3_token;
