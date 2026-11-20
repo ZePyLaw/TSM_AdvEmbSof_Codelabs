@@ -47,22 +47,12 @@ public:
 
   ResetDevice(CallbackFunction callback);
 
-  // Timestamp captured by the GPIO callback (used for response-time logging).
-  std::chrono::microseconds get_press_time();
-
 private:
-  // Called by zpp_lib when the button interrupt occurs (ISR context).
-  void on_fall_button1();
-
-  // Reset callback
-  CallbackFunction _reset_callback;
-
   // Hardware input used to detect button presses.
   zpp_lib::InterruptIn _button1;
 
   // RAII token unregisters the callback when the object is destroyed.
   zpp_lib::RegistrationToken _button1_token;
-  std::chrono::microseconds _press_time{std::chrono::microseconds::zero()};
 };
 
 }  // namespace bike_computer::static_scheduling_with_wq

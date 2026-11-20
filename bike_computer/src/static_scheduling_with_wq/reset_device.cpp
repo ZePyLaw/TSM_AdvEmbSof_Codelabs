@@ -24,26 +24,10 @@
 
 #include "reset_device.hpp"
 
-// zpp_lib
-#include "zpp_include/time.hpp"
-
 namespace bike_computer::static_scheduling_with_wq {
 
 ResetDevice::ResetDevice(CallbackFunction callback)
-    : _reset_callback(std::move(callback)), _button1(zpp_lib::InterruptIn::PinName::BUTTON1),
-      _button1_token(_button1.add_callback([this]() { this->on_fall_button1(); })) {}
-
-std::chrono::microseconds ResetDevice::get_press_time() {
-  return _press_time;
-}
-
-void ResetDevice::on_fall_button1() {
-  // Timestamp the physical button edge as early as possible in the ISR.
-  // Do not trigger the reset here, BikeSystem handles it periodically.
-  _press_time = zpp_lib::Time::get_uptime();
-
-  // Signal the BikeSystem using the registered callback
-  _reset_callback();
-}
+    : _button1(zpp_lib::InterruptIn::PinName::BUTTON1),
+      _button1_token(_button1.add_callback(callback)) {}
 
 }  // namespace bike_computer::static_scheduling_with_wq

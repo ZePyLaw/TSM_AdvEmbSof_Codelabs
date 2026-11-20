@@ -25,7 +25,6 @@
 #pragma once
 
 // stl
-#include <atomic>
 #include <functional>
 
 // local
@@ -34,8 +33,8 @@
 #include "reset_device.hpp"
 
 // zpp_lib
-#include "zpp_include/display.hpp"
 #include "zpp_include/work_queue.hpp"
+#include "zpp_include/time.hpp"
 
 // from common
 #include "common/bike_display.hpp"
@@ -72,16 +71,15 @@ public:
 private:
   // private methods
   [[nodiscard]] zpp_lib::ZephyrResult initialize();
-  void speed_distance_task();
   void temperature_task();
-  void reset_task();
+  void update_reset();
   void display_task1();
   void display_task2();
   void on_reset();
   void on_gear_changed(uint8_t current_gear, uint8_t current_gear_size);
   void on_pedal_rotation_time_changed(std::chrono::milliseconds pedal_rotation_time);
-  void gear_task(uint8_t current_gear, uint8_t current_gear_size);
-  void speed_distance_task(std::chrono::milliseconds pedal_rotation_time);
+  void update_gear(uint8_t current_gear, uint8_t current_gear_size);
+  void update_pedal(std::chrono::milliseconds pedal_rotation_time);
 
   // define a work queue to serve the ISRs
   zpp_lib::WorkQueue _isr_work_queue;
@@ -107,6 +105,9 @@ private:
   // data member that represents the sensor device
   SensorDevice _sensor_device;
   float _current_temperature = 0.0F;
+
+  // Reset press time
+  std::chrono::microseconds _press_time{std::chrono::microseconds::zero()};
 
   // used for managing tasks info
   TaskManager _task_manager;
