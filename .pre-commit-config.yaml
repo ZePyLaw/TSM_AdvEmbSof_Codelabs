@@ -108,18 +108,18 @@ repos:
     require_serial: true
     files: ^(bike_computer/tests/bike_system_part2)/.*\.(c|cc|cpp|cxx)$
 
-#  - id: clang-tidy-bike-computer-bike-system-part3
-#    name: clang-tidy-bike-computer-bike-system-part3
-#    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part3 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+button_emul+test" --header-root "bike_computer" --wd "." --app-config ../../prj_static_scheduling_with_wq.conf
-#    language: system
-#    pass_filenames: true
-#    require_serial: true
-#    files: ^(bike_computer/tests/bike_system_part3)/.*\.(c|cc|cpp|cxx)$
+  - id: clang-tidy-bike-computer-bike-system-part3
+    name: clang-tidy-bike-computer-bike-system-part3
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app bike_computer/tests/bike_system_part3 --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+gpio+display+sensor+button_emul+test" --header-root "bike_computer" --wd "." --app-config ../../prj_static_scheduling_with_wq.conf
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(bike_computer/tests/bike_system_part3)/.*\.(c|cc|cpp|cxx)$
 
-#  - id: clang-tidy-multi-tasking
-#    name: clang-tidy-multi-tasking
-#    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app multi_tasking --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+stats+gpio" --header-root "multi_tasking" --wd "." --app-config prj_multi_tasking.conf
-#    language: system
-#    pass_filenames: true
-#    require_serial: true
-#    files: ^(multi_tasking)/.*\.(c|cc|cpp|cxx)$
+  - id: clang-tidy-multi-tasking
+    name: clang-tidy-multi-tasking
+    entry: python deps/zpp_lib/scripts/run_clang_tidy.py --app multi_tasking --board nrf5340dk/nrf5340/cpuapp --shield adafruit_2_8_tft_touch_v2 --configs "log+debug+stats+gpio" --header-root "multi_tasking" --wd "." --app-config prj_multi_tasking.conf
+    language: system
+    pass_filenames: true
+    require_serial: true
+    files: ^(multi_tasking)/.*\.(c|cc|cpp|cxx)$

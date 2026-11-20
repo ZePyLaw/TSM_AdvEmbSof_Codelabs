@@ -6,15 +6,7 @@ applications:
     configs:
       - gpio
       - log+debug+gpio
-
-  - app: sanitize
-    boards:
-      - board: nrf5340dk/nrf5340/cpuapp
-      - board: qemu_x86
-    configs:
-      - shell
-      - shell+debug
-      - shell+san
+    configs_dir: ../deps/zpp_lib/configs
 
   - app: bme280
     boards:
@@ -23,6 +15,33 @@ applications:
     configs:
       - sensor
       - log+debug+sensor
+    configs_dir: ../deps/zpp_lib/configs
+
+  - app: sanitize
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+      - board: qemu_x86
+    configs:
+      - shell
+      - shell+san
+      - shell+debug
+    configs_dir: ../deps/zpp_lib/configs
+
+  - app: simple_tests/always_succeed
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+      - board: qemu_x86
+    configs:
+      - test+log+debug
+    configs_dir: ../../deps/zpp_lib/configs
+  
+  - app: simple_tests/ptr_test
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+      - board: qemu_x86
+    configs:
+      - test+log+debug
+    configs_dir: ../../deps/zpp_lib/configs
 
   # Phase B: BikeComputer Part I - Super Loop
   - app: bike_computer
@@ -32,6 +51,7 @@ applications:
       - board: qemu_x86
     configs:
       - log+debug+gpio+display+sensor
+    configs_dir: ../deps/zpp_lib/configs
     app_config: prj_static_scheduling.conf
 
   # Phase B: BikeComputer Part II - TTCE and event-driven scheduling
@@ -42,4 +62,27 @@ applications:
       - board: qemu_x86
     configs:
       - log+debug+gpio+display+sensor+log_cpu
+    configs_dir: ../deps/zpp_lib/configs
     app_config: prj_static_scheduling_with_event.conf
+
+    # Phase C: BikeComputer Part III - Static Scheduling with a Work Queue
+  - app: bike_computer
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+        shield: adafruit_2_8_tft_touch_v2
+      - board: qemu_x86
+    configs:
+      - log+debug+gpio+display+sensor+log_cpu+stats
+    configs_dir: ../deps/zpp_lib/configs
+    app_config: prj_static_scheduling_with_wq.conf
+  
+  - app: multi_tasking
+    boards:
+      - board: nrf5340dk/nrf5340/cpuapp
+        shield: adafruit_2_8_tft_touch_v2
+      - board: qemu_x86
+    configs: 
+      - gpio
+      - log+debug+gpio
+    configs_dir: ../deps/zpp_lib/configs
+    app_config: prj_multi_tasking.conf

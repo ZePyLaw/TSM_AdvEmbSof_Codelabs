@@ -7,7 +7,7 @@ tests:
 
   # Phase B: BikeComputer tests
   - root: bike_computer/tests
-    tags: ["phase_b"]
+    tags: ["phase_b", "phase_c"]
     boards:
       - board: nrf5340dk/nrf5340/cpuapp
       - board: qemu_x86
