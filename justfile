@@ -63,7 +63,7 @@ clang-tidy app configs app_config="":
 
     # Step 2 — filter the compile_commands.json file for compatibility with clang-tidy
     mkdir -p build_clang
-    python3 {{zpp_lib_dir}}/scripts/filter_compile_commands.py build/compile_commands.json build_clang/compile_commands.json {{app}}
+    python {{zpp_lib_dir}}/scripts/filter_compile_commands.py build/compile_commands.json build_clang/compile_commands.json {{app}}
 
     # Step 3 — run clang-tidy against the filtered database
     clang-tidy -p build_clang {{working_dir}}/{{app}}/src/main.cpp    
