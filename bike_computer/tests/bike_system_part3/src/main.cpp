@@ -29,7 +29,6 @@
 #include <cstdlib>
 
 // zephyr
-#include <zephyr/sys/printk.h>
 
 // zpp_lib
 #include "zpp_include/event.hpp"
@@ -52,7 +51,7 @@ using std::literals::chrono_literals::operator""s;
 // can be overridden for each platform. The value should be set so that the test passes on your platform.
 // It should not be below 20s for any platform.
 // TEMPORARY DEBUG ONLY: restore CONFIG_TEST_DURATION_IN_MS before final validation.
-static constexpr std::chrono::milliseconds kTestDuration(2000);
+static constexpr std::chrono::milliseconds kTestDuration(CONFIG_TEST_DURATION_IN_MS);
 
 // test_bike_system_static_with_wq handler function
 ZPP_ZTEST(bike_system_part3, test_bike_system_static_with_wq) {
@@ -74,25 +73,17 @@ ZPP_ZTEST(bike_system_part3, test_bike_system_static_with_wq) {
       zpp_lib::ThisThread::sleep_for(kTestDuration);
 
       // stop the bike system
-      printk("[DIAG] Sleep finished, calling stop()\n");
       bike_system.stop();
-      printk("[DIAG] stop() returned\n");
 
       // wait for thread to terminate
-      printk("[DIAG] Calling join()\n");
       res = thread.join();
-      printk("[DIAG] join() returned\n");
       zpp_zassert_true(res, "Could not join thread");
-
-      printk("[DIAG] Final assertion passed, leaving thread scope\n");
     }
 
     // If this message appears, the Thread destructor has completed.
-    printk("[DIAG] Thread object destroyed\n");
   }
 
   // If this message appears, the BikeSystem destructor has completed.
-  printk("[DIAG] BikeSystem object destroyed\n");
 }
 
 // test_reset_bike_system_with_wq handler function
@@ -175,6 +166,88 @@ ZPP_ZTEST(bike_system_part3, test_reset_bike_system_with_wq) {
 
   res = thread.join();
   zpp_zassert_true(res, "Could not join thread");
+}
+
+// Test the gear selection using the emulated buttons.
+// Button 2 must be held while pressing button 3 or button 4.
+ZPP_ZTEST(bike_system_part3, test_gear_device_with_wq) {
+  using GearDevice = bike_computer::static_scheduling_with_wq::GearDevice;
+
+  uint8_t current_gear      = GearDevice::kInitialGear;
+  uint8_t current_gear_size = GearDevice::kInitialGearSize;
+  unsigned callback_count   = 0U;
+
+  GearDevice gear_device([&](uint8_t gear, uint8_t gear_size) {
+    current_gear      = gear;
+    current_gear_size = gear_size;
+    ++callback_count;
+  });
+
+  auto& modifier_button  = gear_device.get_modifier_button();
+  auto& gear_down_button = gear_device.get_gear_down_button();
+  auto& gear_up_button   = gear_device.get_gear_up_button();
+
+  // Simulate a complete button press and release.
+  auto press_button = [](zpp_lib::InterruptIn& button) {
+    button.write(!zpp_lib::kPolarityPressed);
+    button.write(zpp_lib::kPolarityPressed);
+    button.write(!zpp_lib::kPolarityPressed);
+  };
+
+  // Make sure all buttons start released.
+  modifier_button.write(!zpp_lib::kPolarityPressed);
+  gear_down_button.write(!zpp_lib::kPolarityPressed);
+  gear_up_button.write(!zpp_lib::kPolarityPressed);
+
+  // Without button 2, gear changes must be ignored.
+  press_button(gear_up_button);
+  press_button(gear_down_button);
+
+  zpp_zassert_true(callback_count == 0U, "Gear changed without modifier button");
+
+  // Hold button 2.
+  modifier_button.write(zpp_lib::kPolarityPressed);
+
+  // Increase the gear up to the maximum.
+  uint8_t expected_gear = GearDevice::kInitialGear;
+
+  while (expected_gear < bike_computer::kMaxGear) {
+    press_button(gear_up_button);
+    ++expected_gear;
+
+    zpp_zassert_true(current_gear == expected_gear, "Gear did not increase correctly");
+
+    zpp_zassert_true(current_gear_size == bike_computer::kMaxGearSize - expected_gear, "Gear size incorrect after increasing");
+  }
+
+  // Pressing UP at the maximum must not exceed the limit.
+  press_button(gear_up_button);
+
+  zpp_zassert_true(current_gear == bike_computer::kMaxGear, "Gear exceeded maximum value");
+
+  // Decrease the gear down to the minimum.
+  while (expected_gear > bike_computer::kMinGear) {
+    press_button(gear_down_button);
+    --expected_gear;
+
+    zpp_zassert_true(current_gear == expected_gear, "Gear did not decrease correctly");
+
+    zpp_zassert_true(current_gear_size == bike_computer::kMaxGearSize - expected_gear, "Gear size incorrect after decreasing");
+  }
+
+  // Pressing DOWN at the minimum must not exceed the limit.
+  press_button(gear_down_button);
+
+  zpp_zassert_true(current_gear == bike_computer::kMinGear, "Gear went below minimum value");
+
+  // Releasing button 2 must disable gear adjustments again.
+  modifier_button.write(!zpp_lib::kPolarityPressed);
+
+  const unsigned callbacks_before_release = callback_count;
+
+  press_button(gear_up_button);
+
+  zpp_zassert_true(callback_count == callbacks_before_release, "Gear changed after releasing modifier button");
 }
 
 ZPP_ZTEST_SUITE(bike_system_part3, nullptr, nullptr, nullptr, nullptr, nullptr);
