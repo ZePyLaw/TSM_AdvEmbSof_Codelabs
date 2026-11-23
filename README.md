@@ -795,3 +795,37 @@ The requested 120000 ms duration was verified using Zephyr's system uptime.
 
 All three tests passed, and the pre-commit formatting and static analysis
 checks completed successfully.
+
+### Question 1 - WorkQueue Priority and Reset Response Time
+
+The reset response time was measured on the physical nRF5340DK
+with WorkQueue priorities 8, 9 and 10.
+
+| WorkQueue priority | Samples | Minimum | Average | Maximum | Observed variation |
+|---|---:|---:|---:|---:|---:|
+| 8 | 20 | 30 us | 36.7 us | 61 us | 31 us |
+| 9 | 10 | 30 us | 42.9 us | 153 us | 123 us |
+| 10 | 21 | 30 us | 1714.9 us | 35279 us | 35249 us |
+
+The observed variation is calculated as the difference between the
+maximum and minimum response times.
+
+For all three priorities, the median response time was 31 us.
+This shows that the reset is normally processed very quickly,
+regardless of the selected WorkQueue priority.
+
+However, occasional delays were observed. With priority 8, all
+measured response times remained between 30 and 61 us. With priority 9,
+one response reached 153 us. With priority 10, one response reached
+35279 us (approximately 35.3 ms), strongly affecting the average.
+
+In Zephyr, a lower numerical priority means a higher scheduling
+priority. Increasing the WorkQueue priority can therefore reduce
+delays caused by competition with other threads.
+
+Priority 8 provided the most consistent results in this experiment.
+Nevertheless, the limited sample sizes do not guarantee that
+occasional delays cannot also occur at priority 8.
+
+These results illustrate why worst-case response time and timing
+variation matter in real-time systems, rather than only the average.
