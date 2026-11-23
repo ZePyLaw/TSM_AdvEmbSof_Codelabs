@@ -50,8 +50,7 @@ BikeSystem::BikeSystem()
       _reset_work(zpp_lib::Work<BikeSystem>(this, &BikeSystem::update_reset)),
       _gear_work(zpp_lib::Work<BikeSystem, uint8_t, uint8_t>(
           this, &BikeSystem::update_gear, GearDevice::kInitialGear, GearDevice::kInitialGearSize)),
-      _pedal_work(
-          zpp_lib::Work<BikeSystem, std::chrono::milliseconds>(this, &BikeSystem::update_pedal, PedalDevice::kInitialRotationTime)),
+      _pedal_work(zpp_lib::Work<BikeSystem, std::chrono::milliseconds>(this, &BikeSystem::update_pedal, PedalDevice::kInitialRotationTime)),
       _reset_device([this]() { this->on_reset(); }),
       _gear_device([this](uint8_t current_gear, uint8_t current_gear_size) { this->on_gear_changed(current_gear, current_gear_size); }),
       _pedal_device([this](std::chrono::milliseconds pedal_rotation_time) { this->on_pedal_rotation_time_changed(pedal_rotation_time); }) {}
@@ -118,6 +117,12 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 void BikeSystem::stop() {
   // _ttce handle his own stop
   _ttce.stop();
+
+  // Stop the work queue dedicated to ISR events
+  auto res = _isr_work_queue.stop();
+  if (!res) {
+    ZPP_LOG_ERR("Cannot stop ISR work queue: %d", static_cast<int>(res.error()));
+  }
 }
 
 zpp_lib::ZephyrResult BikeSystem::initialize() {
@@ -175,6 +180,7 @@ void BikeSystem::on_pedal_rotation_time_changed(std::chrono::milliseconds pedal_
   }
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void BikeSystem::update_gear(uint8_t current_gear, uint8_t current_gear_size) {
   // Update the components that needs current_gear and current_gear_size
   _bike_display.display_gear(current_gear);
@@ -202,9 +208,10 @@ void BikeSystem::temperature_task() {
 
 void BikeSystem::update_reset() {
   std::chrono::microseconds response_time = zpp_lib::Time::get_uptime() - _press_time;
-  ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 
   _speedometer.reset();
+
+  ZPP_LOG_INF("Reset task: response time is %" PRIu64 " usecs", response_time.count());
 }
 
 void BikeSystem::display_task1() {

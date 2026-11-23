@@ -1,3 +1,100 @@
+
+// Copyright 2025 Haute école d'ingénierie et d'architecture de Fribourg
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/****************************************************************************
+ * @file test_bike_system_part3.cpp
+ * @author Serge Ayer <serge.ayer@hefr.ch>
+ * @author Robin Schaerrer <robin.schaerrer@master.hes-so.ch>
+ *
+ * @brief Tests for BikeSystem Part III
+ *
+ * @date 2026-11-23
+ * @version 1.0.0
+ ***************************************************************************/
+// std
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
+// zephyr
+#include <zephyr/sys/printk.h>
+
+// zpp_lib
+#include "zpp_include/event.hpp"
+#include "zpp_include/this_thread.hpp"
+#include "zpp_include/thread.hpp"
+#include "zpp_include/time.hpp"
+#include "zpp_include/zpp_assert.hpp"
+#include "zpp_include/zpp_log.hpp"
+#include "zpp_include/zpp_test.hpp"
+
+// bike computer
+#include "static_scheduling_with_wq/bike_system.hpp"
+
+ZPP_LOG_MODULE_REGISTER(bike_computer, CONFIG_APP_LOG_LEVEL);
+
+// for ms or s literals
+using std::literals::chrono_literals::operator""s;
+
+// The value of TEST_DURATION_IN_MS is set in the test case configuration file (testcase.yaml) and
+// can be overridden for each platform. The value should be set so that the test passes on your platform.
+// It should not be below 20s for any platform.
+// TEMPORARY DEBUG ONLY: restore CONFIG_TEST_DURATION_IN_MS before final validation.
+static constexpr std::chrono::milliseconds kTestDuration(2000);
+
+// test_bike_system_static_with_wq handler function
+ZPP_ZTEST(bike_system_part3, test_bike_system_static_with_wq) {
+  {
+    // create the BikeSystem instance
+    bike_computer::static_scheduling_with_wq::BikeSystem bike_system;
+
+    {
+      // run the bike system in a separate thread
+      zpp_lib::Thread thread(zpp_lib::PreemptableThreadPriority::PriorityNormal, "Test BS WQ");
+      ZPP_LOG_DBG("Starting thread");
+      auto res = thread.start([&bike_system]() {
+        auto res = bike_system.start();
+        zpp_zassert_true(res, "BikeSystem start failed");
+      });
+      zpp_zassert_true(res, "Could not start thread");
+
+      // let the bike system run for the test duration
+      zpp_lib::ThisThread::sleep_for(kTestDuration);
+
+      // stop the bike system
+      printk("[DIAG] Sleep finished, calling stop()\n");
+      bike_system.stop();
+      printk("[DIAG] stop() returned\n");
+
+      // wait for thread to terminate
+      printk("[DIAG] Calling join()\n");
+      res = thread.join();
+      printk("[DIAG] join() returned\n");
+      zpp_zassert_true(res, "Could not join thread");
+
+      printk("[DIAG] Final assertion passed, leaving thread scope\n");
+    }
+
+    // If this message appears, the Thread destructor has completed.
+    printk("[DIAG] Thread object destroyed\n");
+  }
+
+  // If this message appears, the BikeSystem destructor has completed.
+  printk("[DIAG] BikeSystem object destroyed\n");
+}
+
 // test_reset_bike_system_with_wq handler function
 // Using global static variables is acceptable for this test, since they
 // are only used in this test and not in the BikeSystem class
@@ -79,3 +176,5 @@ ZPP_ZTEST(bike_system_part3, test_reset_bike_system_with_wq) {
   res = thread.join();
   zpp_zassert_true(res, "Could not join thread");
 }
+
+ZPP_ZTEST_SUITE(bike_system_part3, nullptr, nullptr, nullptr, nullptr, nullptr);

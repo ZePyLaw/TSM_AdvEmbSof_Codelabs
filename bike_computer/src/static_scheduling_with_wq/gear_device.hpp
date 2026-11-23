@@ -53,6 +53,20 @@ public:
 
   GearDevice(CallbackFunction callback);
 
+#if CONFIG_TEST
+  [[nodiscard]] zpp_lib::InterruptIn& get_modifier_button() {
+    return _button2;
+  }
+
+  [[nodiscard]] zpp_lib::InterruptIn& get_gear_down_button() {
+    return _button3;
+  }
+
+  [[nodiscard]] zpp_lib::InterruptIn& get_gear_up_button() {
+    return _button4;
+  }
+#endif  // CONFIG_TEST
+
 private:
   // Called by zpp_lib when the buttons interrupts occurs (ISR context).
   void on_fall_button3();

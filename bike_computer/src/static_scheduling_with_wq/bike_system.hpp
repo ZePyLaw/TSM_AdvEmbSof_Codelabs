@@ -33,8 +33,8 @@
 #include "reset_device.hpp"
 
 // zpp_lib
-#include "zpp_include/work_queue.hpp"
 #include "zpp_include/time.hpp"
+#include "zpp_include/work_queue.hpp"
 
 // from common
 #include "common/bike_display.hpp"
@@ -67,6 +67,16 @@ public:
 
   // method called for stopping the system
   void stop();
+
+#if CONFIG_TEST
+  [[nodiscard]] Speedometer& get_speedometer() {
+    return _speedometer;
+  }
+
+  [[nodiscard]] ResetDevice& get_reset_device() {
+    return _reset_device;
+  }
+#endif  // CONFIG_TEST
 
 private:
   // private methods

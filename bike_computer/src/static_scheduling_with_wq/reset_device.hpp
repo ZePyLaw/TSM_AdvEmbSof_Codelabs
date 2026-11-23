@@ -47,6 +47,12 @@ public:
 
   ResetDevice(CallbackFunction callback);
 
+#if CONFIG_TEST
+  [[nodiscard]] zpp_lib::InterruptIn& get_reset_button() {
+    return _button1;
+  }
+#endif  // CONFIG_TEST
+
 private:
   // Hardware input used to detect button presses.
   zpp_lib::InterruptIn _button1;
