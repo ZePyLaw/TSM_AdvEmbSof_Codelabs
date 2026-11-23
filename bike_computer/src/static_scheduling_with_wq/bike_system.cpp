@@ -66,15 +66,14 @@ zpp_lib::ZephyrResult BikeSystem::start() {
 
   zpp_lib::Utils::log_threads_summary();
 
-  _ttce.add_initial_task([this]() {
-    auto res = this->initialize();
-    if (!res) {
-      ZPP_LOG_ERR("Init failed: %d", static_cast<int>(res.error()));
-      return;
-    }
-    // initialize the task manager phase
-    this->_task_manager.initialize_phase();
-  });
+  // Initialize devices before starting the TTCE timer.
+  auto init_res = initialize();
+  if (!init_res) {
+    ZPP_LOG_ERR("Init failed: %d", static_cast<int>(init_res.error()));
+    return init_res;
+  }
+
+  _ttce.add_initial_task([this]() { this->_task_manager.initialize_phase(); });
 
   // Declare the variable res before assignation
   zpp_lib::ZephyrResult res;
