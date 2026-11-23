@@ -762,3 +762,36 @@ The `WaitOnButton` thread has priority 10, while the main thread has priority 9.
 Since the main thread never blocks or yields, the lower-priority `WaitOnButton` thread never gets CPU time to process the button event. Although the interrupt is still handled and the event is signaled, no response time is printed because the waiting thread never executes.
 
 This behavior is an example of **thread starvation**.
+
+## Phase C - Bike Computer - Part 3
+
+### Event-driven scheduling with WorkQueue
+
+The Bike Computer Part III implementation uses a dedicated Zephyr WorkQueue
+to process reset, gear and pedal events outside the interrupt context.
+
+The interrupt callbacks submit work to the WorkQueue, allowing the events
+to be processed without waiting for the next periodic TTCE cycle.
+
+The TTCE continues to schedule the remaining periodic tasks.
+
+The WorkQueue thread priority is configured using
+`CONFIG_WORK_QUEUE_THREAD_PRIORITY`.
+
+### Automated tests
+
+The following three test cases were successfully executed on QEMU using:
+
+`just test-qemu bike_computer/tests/bike_system_part3`
+
+| Test case | QEMU result |
+|---|---|
+| `test_bike_system_static_with_wq` | PASS |
+| `test_reset_bike_system_with_wq` | PASS |
+| `test_gear_device_with_wq` | PASS |
+
+The periodic test uses `CONFIG_TEST_DURATION_IN_MS=120000`.
+The requested 120000 ms duration was verified using Zephyr's system uptime.
+
+All three tests passed, and the pre-commit formatting and static analysis
+checks completed successfully.
